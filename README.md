@@ -1,12 +1,18 @@
 # 💰 Meu Orçamento
 
-**Aplicação de gestão financeira pessoal com análise por IA** ✨
+Sistema completo de gestão financeira pessoal e multi-tenant desenvolvido com HTML, CSS, JavaScript (vanilla) no frontend e Node.js + MySQL no backend.
 
-Sistema completo de controle financeiro construído com **HTML5**, **CSS3** (Tailwind) e **JavaScript Vanilla**, integrado com a **Google Gemini API** para análises financeiras inteligentes.
+## ✨ Features
 
----
-
-## 🎯 Funcionalidades
+- 🔐 **Multi-Tenancy**: Autenticação JWT com isolamento por organização
+- 💳 **Contas**: Gerenciamento com ícones personalizados (10 opções coloridas)
+- 📊 **Transações**: Receitas e despesas com atualização automática de saldos
+- 🔄 **Transferências**: Entre contas com validação
+- 🏷️ **Categorias**: Principais e subcategorias hierárquicas
+- 📈 **Dashboard**: Cards informativos, gráficos e análises
+- 💾 **Orçamento**:Planejamento mensal
+- 🌙 **Dark Mode**: Interface adaptável
+- 📱 **Responsivo**: Mobile, tablet e desktop
 
 ### 📊 **Dashboard Interativo**
 - **Cards de resumo**: Saldo total, receitas, despesas e balanço mensal
