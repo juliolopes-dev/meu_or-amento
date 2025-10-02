@@ -233,8 +233,9 @@
         </div>
     </div>
 
+    <script src="config.js"></script>
     <script>
-        const API_URL = 'http://localhost:3000/api';
+        const API_URL = window.API_URL || 'http://localhost:3000/api';
 
         // Tab switching
         const tabLogin = document.getElementById('tab-login');
