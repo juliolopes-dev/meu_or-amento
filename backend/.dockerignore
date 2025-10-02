@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+.env.example
+*.md
+.git
+.gitignore
+migrate-*.js
+fix-*.js
+check-*.js
+recalculate-*.js
+update_accounts_schema.sql

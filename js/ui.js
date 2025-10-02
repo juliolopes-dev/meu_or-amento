@@ -1,0 +1,516 @@
+/**
+ * UI Rendering Functions
+ * Handles all DOM rendering and chart visualizations
+ */
+
+/**
+ * Main render function - delegates to specific view renderers
+ */
+function render() {
+    // Update chart global colors based on theme
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    Chart.defaults.color = isDarkMode ? '#94a3b8' : '#64748b';
+    Chart.defaults.borderColor = isDarkMode ? '#334155' : '#e2e8f0';
+
+    switch(state.currentView) {
+        case 'dashboard':
+            renderDashboard();
+            break;
+        case 'budget':
+            renderBudget();
+            break;
+        case 'transactions':
+            renderTransactions();
+            break;
+        case 'accounts':
+            renderAccounts();
+            break;
+        case 'categories':
+            renderCategories();
+            break;
+    }
+}
+
+/**
+ * Render Dashboard view
+ */
+function renderDashboard() {
+    const summaryCardsContent = document.getElementById('dashboard-summary-cards');
+    const progressSection = document.getElementById('dashboard-progress-section');
+    if (!state.accounts.length) {
+         const dashboardEl = document.getElementById('dashboard');
+         dashboardEl.innerHTML = `<h2 class="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-8">Dashboard</h2> <p class="text-center col-span-full text-slate-500">Adicione sua primeira conta para começar.</p>`;
+        return;
+    }
+
+    const totalBalance = state.accounts.reduce((sum, acc) => sum + (parseFloat(acc.balance) || 0), 0);
+    
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    const monthTransactions = state.transactions.filter(t => {
+        const tDate = new Date(t.date);
+        return tDate >= startOfMonth && tDate <= endOfMonth;
+    });
+    
+    const totalIncome = monthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    
+    // Calculate savings rate
+    const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
+
+    summaryCardsContent.innerHTML = `
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Saldo Total</h3>
+            <p class="text-2xl font-bold text-slate-800 dark:text-slate-100">${formatCurrency(totalBalance)}</p>
+        </div>
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Receitas do Mês</h3>
+            <p class="text-2xl font-bold text-green-500">${formatCurrency(totalIncome)}</p>
+        </div>
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Despesas do Mês</h3>
+            <p class="text-2xl font-bold text-red-500">${formatCurrency(totalExpenses)}</p>
+        </div>
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Balanço do Mês</h3>
+            <p class="text-2xl font-bold ${totalIncome - totalExpenses >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(totalIncome - totalExpenses)}</p>
+        </div>
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm flex flex-col">
+            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Taxa de Poupança</h3>
+            <p class="text-2xl font-bold ${savingsRate >= 0 ? 'text-green-500' : 'text-red-500'}">${savingsRate.toFixed(1)}%</p>
+            <p class="text-xs text-slate-500 mt-1">${totalIncome > 0 ? 'economizada' : 'sem receitas'}</p>
+        </div>
+    `;
+    
+    const totalPlanned = state.budgetPlan.items.reduce((sum, item) => {
+        const plannedAmount = item.type === 'fixed' ? item.value : totalIncome * (item.value / 100);
+        return sum + plannedAmount;
+    }, 0);
+    
+    const budgetProgressPercentage = totalPlanned > 0 ? (totalExpenses / totalPlanned) * 100 : 0;
+    const budgetProgressColor = budgetProgressPercentage > 90 ? 'bg-red-500' : budgetProgressPercentage > 70 ? 'bg-yellow-500' : 'bg-slate-700';
+
+    // Render accounts card
+    const colorClasses = {
+        purple: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
+        blue: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+        green: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
+        pink: 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400',
+        orange: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400',
+        indigo: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400',
+        emerald: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
+        amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
+        teal: 'bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400',
+        cyan: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400'
+    };
+
+    progressSection.innerHTML = `
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300">Minhas Contas</h3>
+                <span class="text-sm text-slate-500 dark:text-slate-400">${state.accounts.length} ${state.accounts.length === 1 ? 'conta' : 'contas'}</span>
+            </div>
+            <div class="space-y-3">
+                ${state.accounts.map(account => {
+                    const icon = account.icon || 'wallet';
+                    const color = account.color || 'purple';
+                    const balance = parseFloat(account.balance) || 0;
+                    return `
+                        <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                            <div class="flex-shrink-0 w-12 h-12 ${colorClasses[color]} rounded-xl flex items-center justify-center shadow-sm">
+                                <i data-lucide="${icon}" class="w-6 h-6"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-semibold text-slate-800 dark:text-slate-100 truncate">${account.name}</p>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Saldo disponível</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-lg ${balance >= 0 ? 'text-slate-800 dark:text-slate-100' : 'text-red-500'}">${formatCurrency(balance)}</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm">
+            <h3 class="text-lg font-semibold mb-4 text-slate-700 dark:text-slate-300">Progresso do Orçamento Mensal</h3>
+            <div class="flex justify-between items-center text-sm text-slate-600 dark:text-slate-400 mb-1">
+                <span>Gasto: ${formatCurrency(totalExpenses)}</span>
+                <span>Planejado: ${formatCurrency(totalPlanned)}</span>
+            </div>
+            <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-4">
+                <div class="${budgetProgressColor} h-4 rounded-full text-white text-xs flex items-center justify-center" style="width: ${Math.min(budgetProgressPercentage, 100)}%">
+                   ${budgetProgressPercentage > 10 ? budgetProgressPercentage.toFixed(0) + '%' : ''}
+                </div>
+            </div>
+            <p class="text-xs text-center mt-2 text-slate-500">${ totalPlanned > 0 ? (budgetProgressPercentage > 100 ? `Você ultrapassou seu orçamento em ${formatCurrency(totalExpenses - totalPlanned)}!` : `Você ainda tem ${formatCurrency(totalPlanned - totalExpenses)} para gastar.`) : 'Defina um orçamento para começar.'}</p>
+        </div>
+    `;
+    
+    // Re-initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+
+    renderCategoryPieChart(monthTransactions);
+    renderIncomeExpenseChart();
+}
+
+/**
+ * Render category pie chart
+ */
+function renderCategoryPieChart(monthTransactions) {
+    const chartContainer = document.getElementById('pie-chart-container');
+    chartContainer.innerHTML = '<canvas id="category-pie-chart"></canvas>';
+    const ctx = document.getElementById('category-pie-chart').getContext('2d');
+    
+    const expensesByCategory = monthTransactions.filter(t => t.type === 'expense').reduce((acc, t) => {
+        const category = state.categories.find(c => c.id === t.categoryId);
+        let parent = category;
+        while (parent && parent.parentId) {
+            parent = state.categories.find(c => c.id === parent.parentId);
+        }
+        const categoryName = parent?.name || category?.name || 'Sem Categoria';
+        if (!acc[categoryName]) { acc[categoryName] = 0; }
+        acc[categoryName] += t.amount;
+        return acc;
+    }, {});
+
+    const labels = Object.keys(expensesByCategory);
+    const data = Object.values(expensesByCategory);
+    
+    if (charts.categoryPie) charts.categoryPie.destroy();
+    if(data.length === 0){
+        chartContainer.innerHTML = `<div class="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">Sem despesas para exibir.</div>`;
+        return;
+    }
+
+    charts.categoryPie = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Despesas por Categoria',
+                data: data,
+                backgroundColor: ['#334155', '#10B981', '#F59E0B', '#EF4444', '#64748b', '#0ea5e9', '#ec4899'],
+                hoverOffset: 4,
+                borderColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#fff',
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+    });
+}
+
+/**
+ * Render income vs expense chart
+ */
+function renderIncomeExpenseChart() {
+    const chartContainer = document.getElementById('bar-chart-container');
+    chartContainer.innerHTML = '<canvas id="income-expense-chart"></canvas>';
+    const ctx = document.getElementById('income-expense-chart').getContext('2d');
+
+    const labels = [];
+    const incomeData = [];
+    const expenseData = [];
+    
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        labels.push(date.toLocaleString('pt-BR', { month: 'short' }));
+        
+        const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+        const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+
+        const monthTransactions = state.transactions.filter(t => new Date(t.date) >= startOfMonth && new Date(t.date) <= endOfMonth);
+        const monthIncome = monthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+        const monthExpense = monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+
+        incomeData.push(monthIncome);
+        expenseData.push(monthExpense);
+    }
+    
+    if (charts.incomeExpense) charts.incomeExpense.destroy();
+    if (!incomeData.some(d => d > 0) && !expenseData.some(d => d > 0)) {
+        chartContainer.innerHTML = `<div class="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">Sem dados históricos para exibir.</div>`;
+        return;
+    }
+
+    charts.incomeExpense = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'Receitas', data: incomeData, backgroundColor: '#10B981', borderRadius: 4 },
+                { label: 'Despesas', data: expenseData, backgroundColor: '#EF4444', borderRadius: 4 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+    });
+}
+
+/**
+ * Render Budget view
+ */
+function renderBudget() {
+    const summaryDiv = document.getElementById('budget-summary');
+    const listDiv = document.getElementById('budget-list');
+
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const monthTransactions = state.transactions.filter(t => new Date(t.date) >= startOfMonth && new Date(t.date) <= endOfMonth);
+    const totalIncomeThisMonth = monthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const totalPlanned = state.budgetPlan.items.reduce((sum, item) => (item.type === 'fixed' ? item.value : totalIncomeThisMonth * (item.value / 100)) + sum, 0);
+    const totalSpent = monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+
+    summaryDiv.innerHTML = `
+        <div class="grid grid-cols-3 gap-6 text-center">
+            <div>
+                <h4 class="text-slate-500 dark:text-slate-400">Receitas do Mês (Real)</h4>
+                <p class="text-2xl font-bold text-green-500">${formatCurrency(totalIncomeThisMonth)}</p>
+            </div>
+            <div>
+                <h4 class="text-slate-500 dark:text-slate-400">Total Orçado (Despesas)</h4>
+                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200">${formatCurrency(totalPlanned)}</p>
+            </div>
+            <div>
+                <h4 class="text-slate-500 dark:text-slate-400">Total Gasto</h4>
+                <p class="text-2xl font-bold text-red-500">${formatCurrency(totalSpent)}</p>
+            </div>
+        </div>
+    `;
+    
+    if (!state.budgetPlan.items.length) {
+        listDiv.innerHTML = `<p class="text-center py-10 text-slate-500 dark:text-slate-400">Nenhum item no orçamento. Adicione um para começar a planejar.</p>`;
+        return;
+    }
+
+    listDiv.innerHTML = state.budgetPlan.items.map(item => {
+        const category = state.categories.find(c => c.id === item.categoryId);
+        const relevantCategoryIds = [item.categoryId, ...getSubCategoryIds(item.categoryId)];
+        const spent = monthTransactions.filter(t => relevantCategoryIds.includes(t.categoryId) && t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+        const plannedAmount = item.type === 'fixed' ? item.value : totalIncomeThisMonth * (item.value / 100);
+        const displayValue = item.type === 'fixed' ? formatCurrency(item.value) : `${item.value}%`;
+        const percentage = plannedAmount > 0 ? (spent / plannedAmount) * 100 : 0;
+        const progressBarColor = percentage > 90 ? 'bg-red-500' : percentage > 70 ? 'bg-yellow-500' : 'bg-slate-700';
+
+        return `
+            <div class="p-4 border-b border-slate-200 dark:border-slate-700">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="flex items-center">
+                        <span class="font-semibold text-slate-700 dark:text-slate-300">${category ? category.name : 'Sem Categoria'}</span>
+                        <span class="text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full px-2 py-1 ml-3">${displayValue}</span>
+                    </div>
+                    <div>
+                        <button data-id="${item.id}" class="edit-budget-item-btn text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 text-sm">Editar</button>
+                        <button data-id="${item.id}" class="delete-budget-item-btn text-red-500 hover:text-red-700 text-sm ml-2">Excluir</button>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center text-sm text-slate-600 dark:text-slate-400">
+                    <span>${formatCurrency(spent)}</span>
+                    <span>${formatCurrency(plannedAmount)}</span>
+                </div>
+                <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 mt-1">
+                    <div class="${progressBarColor} h-2.5 rounded-full" style="width: ${Math.min(percentage, 100)}%"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Render Transactions view
+ */
+function renderTransactions() {
+    const list = document.getElementById('transactions-list');
+    
+    // Combine transactions and transfers
+    const sortedTransactions = [...state.transactions].sort((a,b) => new Date(b.date) - new Date(a.date));
+    const sortedTransfers = [...state.transfers].sort((a,b) => new Date(b.date) - new Date(a.date));
+    
+    // Merge and sort all items
+    const allItems = [...sortedTransactions, ...sortedTransfers].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+    if (!allItems.length) {
+        list.innerHTML = `<p class="text-center py-10 text-slate-500 dark:text-slate-400">Nenhum lançamento encontrado.</p>`;
+        return;
+    }
+    
+    list.innerHTML = `
+        <table class="w-full text-left">
+            <thead class="bg-slate-50 dark:bg-slate-900">
+                <tr class="border-b border-slate-200 dark:border-slate-700">
+                    <th class="p-3 text-sm font-semibold text-slate-600 dark:text-slate-400">Data</th>
+                    <th class="p-3 text-sm font-semibold text-slate-600 dark:text-slate-400">Descrição</th>
+                    <th class="p-3 text-sm font-semibold text-slate-600 dark:text-slate-400">Categoria/Origem</th>
+                    <th class="p-3 text-sm font-semibold text-slate-600 dark:text-slate-400">Conta/Destino</th>
+                    <th class="p-3 text-sm font-semibold text-slate-600 dark:text-slate-400 text-right">Valor</th>
+                    <th class="p-3 text-sm font-semibold text-slate-600 dark:text-slate-400 text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                ${allItems.map(item => {
+                    // Check if it's a transfer
+                    if (item.fromAccountId && item.toAccountId) {
+                        const fromAccount = state.accounts.find(a => a.id === item.fromAccountId);
+                        const toAccount = state.accounts.find(a => a.id === item.toAccountId);
+                        return `
+                            <tr class="bg-purple-50/50 dark:bg-purple-900/10">
+                                <td class="p-3 text-sm text-slate-500 dark:text-slate-400">${new Date(item.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
+                                <td class="p-3 font-medium text-slate-700 dark:text-slate-300">
+                                    <i data-lucide="arrow-left-right" class="w-4 h-4 inline text-purple-600"></i>
+                                    ${item.description}
+                                </td>
+                                <td class="p-3 text-sm text-slate-600 dark:text-slate-400">${fromAccount?.name || 'N/A'}</td>
+                                <td class="p-3 text-sm text-slate-600 dark:text-slate-400">${toAccount?.name || 'N/A'}</td>
+                                <td class="p-3 text-right font-medium text-purple-600 dark:text-purple-400">${formatCurrency(item.amount)}</td>
+                                <td class="p-3 text-center">
+                                    <button data-id="${item.id}" class="delete-transfer-btn text-red-500 hover:text-red-700">Excluir</button>
+                                </td>
+                            </tr>
+                        `;
+                    } else {
+                        // Regular transaction
+                        const account = state.accounts.find(a => a.id === item.accountId);
+                        const category = state.categories.find(c => c.id === item.categoryId);
+                        let categoryName = 'N/A';
+                        if (category) {
+                            const parent = state.categories.find(p => p.id === category.parentId);
+                            categoryName = parent ? `<span class="text-slate-400">${parent.name} /</span> ${category.name}` : category.name;
+                        }
+                        return `
+                            <tr>
+                                <td class="p-3 text-sm text-slate-500 dark:text-slate-400">${new Date(item.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
+                                <td class="p-3 font-medium text-slate-700 dark:text-slate-300">${item.description}</td>
+                                <td class="p-3 text-sm text-slate-600 dark:text-slate-400">${categoryName}</td>
+                                <td class="p-3 text-sm text-slate-500 dark:text-slate-400">${account?.name || 'N/A'}</td>
+                                <td class="p-3 text-right font-medium ${item.type === 'income' ? 'text-green-500' : 'text-red-500'}">${formatCurrency(item.amount)}</td>
+                                <td class="p-3 text-center">
+                                    <button data-id="${item.id}" class="edit-transaction-btn text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">Editar</button>
+                                    <button data-id="${item.id}" class="delete-transaction-btn text-red-500 hover:text-red-700 ml-2">Excluir</button>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                }).join('')}
+            </tbody>
+        </table>
+    `;
+    
+    // Re-initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+/**
+ * Render Accounts view
+ */
+function renderAccounts() {
+    const list = document.getElementById('accounts-list');
+    if(!state.accounts.length) {
+        list.innerHTML = `<p class="text-center col-span-full text-slate-500 dark:text-slate-400">Nenhuma conta encontrada.</p>`;
+        return;
+    }
+
+    list.innerHTML = state.accounts.map(account => {
+        const icon = account.icon || 'wallet';
+        const color = account.color || 'purple';
+        const colorClasses = {
+            purple: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
+            blue: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+            green: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
+            pink: 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400',
+            orange: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400',
+            indigo: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400',
+            emerald: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
+            amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
+            teal: 'bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400',
+            cyan: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400'
+        };
+        
+        return `
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all border border-slate-100 dark:border-slate-700">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-14 h-14 ${colorClasses[color]} rounded-2xl flex items-center justify-center shadow-md">
+                    <i data-lucide="${icon}" class="w-7 h-7"></i>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">${account.name}</h4>
+                    <p class="text-3xl font-bold text-slate-900 dark:text-white">${formatCurrency(account.balance)}</p>
+                </div>
+                <div class="flex gap-2">
+                    <button data-id="${account.id}" class="edit-account-btn p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-700 rounded-lg transition-all">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    </button>
+                    <button data-id="${account.id}" class="delete-account-btn p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `}).join('');
+    
+    // Re-initialize Lucide icons after rendering
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+/**
+ * Render Categories view
+ */
+function renderCategories() {
+    const list = document.getElementById('categories-list');
+    if(!state.categories.length) {
+        list.innerHTML = `<p class="text-center py-10 text-slate-500 dark:text-slate-400">Nenhuma categoria encontrada.</p>`;
+        return;
+    }
+
+    const categoriesHtml = (parentId = null, level = 0) => {
+        return state.categories
+            .filter(c => c.parentId === parentId)
+            .sort((a,b) => a.name.localeCompare(b.name))
+            .map(cat => {
+                const marginLeft = level * 24;
+                return `
+                    <div class="border-b border-slate-200 dark:border-slate-700">
+                        <div class="flex justify-between items-center p-3" style="margin-left: ${marginLeft}px;">
+                            <span class="font-medium text-slate-700 dark:text-slate-300">${cat.name}</span>
+                            <div class="text-center">
+                                <button data-parent-id="${cat.id}" class="add-subcategory-btn text-green-500 hover:text-green-700 text-sm font-bold">+ Sub</button>
+                                <button data-id="${cat.id}" class="edit-category-btn text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 text-sm ml-4">Editar</button>
+                                <button data-id="${cat.id}" class="delete-category-btn text-red-500 hover:text-red-700 text-sm ml-2">Excluir</button>
+                            </div>
+                        </div>
+                    </div>
+                    ${categoriesHtml(cat.id, level + 1)}
+                `;
+            }).join('');
+    };
+
+    list.innerHTML = `
+        <div class="font-semibold p-3 border-b border-slate-300 dark:border-slate-600 flex justify-between bg-slate-50 dark:bg-slate-900 rounded-t-lg text-sm text-slate-600 dark:text-slate-400">
+            <span>Nome da Categoria</span>
+            <span>Ações</span>
+        </div>
+        ${categoriesHtml()}
+    `;
+}
+
+/**
+ * Get category options HTML for select dropdowns
+ */
+function getCategoryOptionsHtml(selectedId = null) {
+    let html = '<option value="">Selecione...</option>';
+    const buildOptions = (parentId = null, prefix = '') => {
+        state.categories.filter(c => c.parentId === parentId).sort((a,b) => a.name.localeCompare(b.name)).forEach(cat => {
+            html += `<option value="${cat.id}" ${selectedId === cat.id ? 'selected' : ''}>${prefix}${cat.name}</option>`;
+            buildOptions(cat.id, prefix + '— ');
+        });
+    };
+    buildOptions();
+    return html;
+}
