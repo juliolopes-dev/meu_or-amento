@@ -1,3 +1,3 @@
 // API Configuration
-// Em produção, altere para a URL do seu backend
-window.API_URL = 'https://seu-backend.easypanel.host/api';
+// URL do backend em produção
+window.API_URL = 'https://meu-orcamento-meu-orcamento-backend.nvd4ga.easypanel.host/api';
