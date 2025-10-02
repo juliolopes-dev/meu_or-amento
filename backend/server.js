@@ -45,8 +45,13 @@ app.use('/api/budget', budgetRoutes);
 app.use('/api/transfers', transferRoutes);
 app.use('/api/ai', aiRoutes);
 
-// Health check
+// Health check (simples e rápido)
 app.get('/api/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
+// Health check detalhado
+app.get('/api/status', (req, res) => {
     res.json({ status: 'OK', message: 'Backend está funcionando!' });
 });
 
