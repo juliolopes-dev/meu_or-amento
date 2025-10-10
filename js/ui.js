@@ -168,11 +168,7 @@ function renderCategoryPieChart(monthTransactions) {
     
     const expensesByCategory = monthTransactions.filter(t => t.type === 'expense').reduce((acc, t) => {
         const category = state.categories.find(c => c.id === t.categoryId);
-        let parent = category;
-        while (parent && parent.parentId) {
-            parent = state.categories.find(c => c.id === parent.parentId);
-        }
-        const categoryName = parent?.name || category?.name || 'Sem Categoria';
+        const categoryName = category?.name || 'Sem Categoria';
         if (!acc[categoryName]) { acc[categoryName] = 0; }
         acc[categoryName] += t.amount;
         return acc;
