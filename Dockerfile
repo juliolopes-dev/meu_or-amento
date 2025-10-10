@@ -1,5 +1,8 @@
 FROM nginx:alpine
 
+# Invalidate cache
+ARG CACHEBUST=1
+
 # Copy frontend files
 COPY index.html /usr/share/nginx/html/
 COPY login.html /usr/share/nginx/html/
