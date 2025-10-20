@@ -109,10 +109,16 @@
         <main class="flex-1 p-8 overflow-y-auto">
             <!-- Dashboard View -->
             <section id="dashboard" class="main-content active">
-                <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-4xl font-bold text-slate-900 dark:text-slate-100">Dashboard</h2>
-                    <button id="gemini-analysis-btn" class="bg-slate-800 text-white px-5 py-2.5 rounded-lg hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center shadow-sm transition-colors">
-                        <span class="mr-2 text-lg">✨</span> Analisar Finanças
+                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
+                    <div class="flex flex-col lg:flex-row lg:items-end gap-3">
+                        <h2 class="text-4xl font-bold text-slate-900 dark:text-slate-100">Dashboard</h2>
+                        <div class="flex items-center gap-2">
+                            <label for="dashboard-month-filter" class="text-sm font-medium text-slate-600 dark:text-slate-300">Filtro mensal</label>
+                            <input type="month" id="dashboard-month-filter" class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500">
+                        </div>
+                    </div>
+                    <button id="gemini-analysis-btn" class="bg-slate-800 text-white px-5 py-2.5 rounded-lg hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center shadow-sm transition-colors w-full md:w-auto justify-center md:justify-start">
+                        <span class="mr-2 text-lg">💡</span> Analisar Finanças
                     </button>
                 </div>
                 <div id="dashboard-summary-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
@@ -123,13 +129,13 @@
                 </div>
                 <div id="dashboard-reports" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm flex flex-col">
-                        <h3 class="text-lg font-semibold mb-4 text-slate-700 dark:text-slate-300">Despesas por Categoria (Mês Atual)</h3>
+                        <h3 id="category-chart-title" class="text-lg font-semibold mb-4 text-slate-700 dark:text-slate-300">Despesas por Categoria (Mês Atual)</h3>
                         <div id="pie-chart-container" class="relative h-80 flex-grow">
                             <canvas id="category-pie-chart"></canvas>
                         </div>
                     </div>
                     <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm flex flex-col">
-                        <h3 class="text-lg font-semibold mb-4 text-slate-700 dark:text-slate-300">Receitas vs Despesas (Últimos 6 Meses)</h3>
+                        <h3 id="income-expense-chart-title" class="text-lg font-semibold mb-4 text-slate-700 dark:text-slate-300">Receitas vs Despesas (Últimos 6 Meses)</h3>
                         <div id="bar-chart-container" class="relative h-80 flex-grow">
                              <canvas id="income-expense-chart"></canvas>
                         </div>
@@ -500,6 +506,21 @@
         </div>
     </div>
 
+    <!-- Category Expenses Modal -->
+    <div id="category-expenses-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-start gap-4 mb-4">
+                <div>
+                    <h3 id="category-expenses-title" class="text-2xl font-semibold text-slate-800 dark:text-slate-200">Gastos da Categoria</h3>
+                    <p id="category-expenses-subtitle" class="text-sm text-slate-500 dark:text-slate-400 mt-1"></p>
+                </div>
+                <button id="close-category-expenses" class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 text-2xl leading-none">&times;</button>
+            </div>
+            <div id="category-expenses-content" class="flex-1 overflow-y-auto space-y-3 pr-2">
+                <!-- Itens inseridos dinamicamente -->
+            </div>
+        </div>
+    </div>
     <!-- Generic Alert Modal -->
     <div id="alert-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4 z-50">
         <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-md">

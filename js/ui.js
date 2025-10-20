@@ -44,10 +44,15 @@ function renderDashboard() {
     }
 
     const totalBalance = state.accounts.reduce((sum, acc) => sum + (parseFloat(acc.balance) || 0), 0);
-    
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    const fallbackDate = new Date();
+    const selected = state.selectedMonth || { year: fallbackDate.getFullYear(), month: fallbackDate.getMonth() + 1 };
+    const selectedDate = new Date(selected.year, (selected.month || 1) - 1, 1);
+    const startOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    const endOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+    const capitalize = (value) => value.charAt(0).toUpperCase() + value.slice(1);
+    const monthName = capitalize(selectedDate.toLocaleDateString('pt-BR', { month: 'long' }));
+    const monthLabel = capitalize(selectedDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }));
 
     const monthTransactions = state.transactions.filter(t => {
         const tDate = new Date(t.date);
@@ -60,27 +65,36 @@ function renderDashboard() {
     // Calculate savings rate
     const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
 
+    const categoryChartTitle = document.getElementById('category-chart-title');
+    if (categoryChartTitle) {
+        categoryChartTitle.textContent = `Despesas por Categoria (${monthLabel})`;
+    }
+    const incomeExpenseChartTitle = document.getElementById('income-expense-chart-title');
+    if (incomeExpenseChartTitle) {
+        incomeExpenseChartTitle.textContent = `Receitas vs Despesas (Últimos 6 meses até ${monthName})`;
+    }
+
     summaryCardsContent.innerHTML = `
         <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
             <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Saldo Total</h3>
             <p class="text-2xl font-bold text-slate-800 dark:text-slate-100">${formatCurrency(totalBalance)}</p>
         </div>
         <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
-            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Receitas do Mês</h3>
+            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Receitas (${monthName})</h3>
             <p class="text-2xl font-bold text-green-500">${formatCurrency(totalIncome)}</p>
         </div>
         <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
-            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Despesas do Mês</h3>
+            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Despesas (${monthName})</h3>
             <p class="text-2xl font-bold text-red-500">${formatCurrency(totalExpenses)}</p>
         </div>
         <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
-            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Balanço do Mês</h3>
+            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Balanço (${monthName})</h3>
             <p class="text-2xl font-bold ${totalIncome - totalExpenses >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(totalIncome - totalExpenses)}</p>
         </div>
         <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm flex flex-col">
             <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Taxa de Poupança</h3>
             <p class="text-2xl font-bold ${savingsRate >= 0 ? 'text-green-500' : 'text-red-500'}">${savingsRate.toFixed(1)}%</p>
-            <p class="text-xs text-slate-500 mt-1">${totalIncome > 0 ? 'economizada' : 'sem receitas'}</p>
+            <p class="text-xs text-slate-500 mt-1">${totalIncome > 0 ? `referente a ${monthName}` : 'sem receitas'}</p>
         </div>
     `;
     
@@ -155,7 +169,7 @@ function renderDashboard() {
     }
 
     renderCategoryPieChart(monthTransactions);
-    renderIncomeExpenseChart();
+    renderIncomeExpenseChart(selectedDate);
 }
 
 /**
@@ -166,20 +180,32 @@ function renderCategoryPieChart(monthTransactions) {
     chartContainer.innerHTML = '<canvas id="category-pie-chart"></canvas>';
     const ctx = document.getElementById('category-pie-chart').getContext('2d');
     
-    const expensesByCategory = monthTransactions.filter(t => t.type === 'expense').reduce((acc, t) => {
-        const category = state.categories.find(c => c.id === t.categoryId);
-        const categoryName = category?.name || 'Sem Categoria';
-        if (!acc[categoryName]) { acc[categoryName] = 0; }
-        acc[categoryName] += t.amount;
-        return acc;
-    }, {});
+    const expensesByCategory = monthTransactions
+        .filter(t => t.type === 'expense')
+        .reduce((acc, t) => {
+            const key = t.categoryId || 'uncategorized';
+            if (!acc[key]) {
+                const category = state.categories.find(c => c.id === t.categoryId);
+                acc[key] = {
+                    label: category?.name || 'Sem Categoria',
+                    total: 0
+                };
+            }
+            acc[key].total += t.amount;
+            return acc;
+        }, {});
 
-    const labels = Object.keys(expensesByCategory);
-    const data = Object.values(expensesByCategory);
+    const categoryKeys = Object.keys(expensesByCategory);
+    const labels = categoryKeys.map(key => expensesByCategory[key].label);
+    const data = categoryKeys.map(key => expensesByCategory[key].total);
     
     if (charts.categoryPie) charts.categoryPie.destroy();
+    const pieCanvas = document.getElementById('category-pie-chart');
+    pieCanvas.onclick = null;
+
     if(data.length === 0){
         chartContainer.innerHTML = `<div class="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">Sem despesas para exibir.</div>`;
+        charts.categoryPieMetadata = null;
         return;
     }
 
@@ -197,12 +223,30 @@ function renderCategoryPieChart(monthTransactions) {
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
     });
+
+    charts.categoryPieMetadata = {
+        categoryKeys,
+        monthTransactions
+    };
+
+    pieCanvas.onclick = (event) => {
+        if (!charts.categoryPie) return;
+        const points = charts.categoryPie.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+        if (!points.length) return;
+        const { index } = points[0];
+        const categoryKey = charts.categoryPieMetadata?.categoryKeys?.[index];
+        if (typeof categoryKey === 'undefined') {
+            return;
+        }
+        const categoryLabel = labels[index];
+        handleCategoryExpensesClick(categoryKey, categoryLabel, charts.categoryPieMetadata.monthTransactions);
+    };
 }
 
 /**
  * Render income vs expense chart
  */
-function renderIncomeExpenseChart() {
+function renderIncomeExpenseChart(referenceDate = new Date()) {
     const chartContainer = document.getElementById('bar-chart-container');
     chartContainer.innerHTML = '<canvas id="income-expense-chart"></canvas>';
     const ctx = document.getElementById('income-expense-chart').getContext('2d');
@@ -210,11 +254,11 @@ function renderIncomeExpenseChart() {
     const labels = [];
     const incomeData = [];
     const expenseData = [];
-    
-    const now = new Date();
+
+    const baseDate = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1);
     for (let i = 5; i >= 0; i--) {
-        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        labels.push(date.toLocaleString('pt-BR', { month: 'short' }));
+        const date = new Date(baseDate.getFullYear(), baseDate.getMonth() - i, 1);
+        labels.push(date.toLocaleString('pt-BR', { month: 'short', year: '2-digit' }));
         
         const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
         const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
@@ -244,6 +288,61 @@ function renderIncomeExpenseChart() {
         },
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
     });
+}
+
+/**
+ * Handle click on category pie chart to show expense details
+ */
+function handleCategoryExpensesClick(categoryKey, categoryLabel, monthTransactions = []) {
+    const titleEl = document.getElementById('category-expenses-title');
+    if (titleEl) {
+        titleEl.textContent = `Gastos - ${categoryLabel}`;
+    }
+
+    let relevantCategoryIds = [];
+    if (categoryKey === 'uncategorized') {
+        relevantCategoryIds = [null];
+    } else {
+        relevantCategoryIds = [categoryKey, ...getSubCategoryIds(categoryKey)];
+    }
+
+    const expenses = monthTransactions.filter(t => {
+        if (t.type !== 'expense') return false;
+        if (categoryKey === 'uncategorized') {
+            return !t.categoryId;
+        }
+        return relevantCategoryIds.includes(t.categoryId);
+    });
+
+    const totalAmount = expenses.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+    const subtitleEl = document.getElementById('category-expenses-subtitle');
+    if (subtitleEl) {
+        const countLabel = expenses.length === 1 ? 'lançamento' : 'lançamentos';
+        subtitleEl.textContent = `${expenses.length} ${countLabel} • Total ${formatCurrency(totalAmount)}`;
+    }
+
+    const contentEl = document.getElementById('category-expenses-content');
+    if (contentEl) {
+        if (!expenses.length) {
+            contentEl.innerHTML = `<p class="text-center text-slate-500 dark:text-slate-400 py-6">Nenhuma despesa encontrada para esta categoria.</p>`;
+        } else {
+            contentEl.innerHTML = expenses.map(t => {
+                const account = state.accounts.find(a => a.id === t.accountId);
+                const dateStr = new Date(t.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+                return `
+                    <div class="border border-slate-200 dark:border-slate-700 rounded-lg p-4 flex justify-between items-start gap-4">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">${t.description}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${dateStr} • ${account?.name || 'Conta não informada'}</p>
+                        </div>
+                        <span class="text-sm font-bold text-red-500">${formatCurrency(t.amount)}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+
+    openModal('category-expenses-modal');
 }
 
 /**

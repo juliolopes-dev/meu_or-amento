@@ -448,6 +448,27 @@ function setupEventListeners() {
         render(); // Re-render to update chart colors
     });
 
+    const dashboardMonthFilter = document.getElementById('dashboard-month-filter');
+    if (dashboardMonthFilter) {
+        const { year, month } = state.selectedMonth;
+        dashboardMonthFilter.value = `${year}-${String(month).padStart(2, '0')}`;
+        dashboardMonthFilter.addEventListener('change', (event) => {
+            const value = event.target.value;
+            if (!value) return;
+            const [selectedYear, selectedMonth] = value.split('-');
+            state.selectedMonth = {
+                year: Number(selectedYear),
+                month: Number(selectedMonth)
+            };
+            render();
+        });
+    }
+
+    const closeCategoryExpensesBtn = document.getElementById('close-category-expenses');
+    if (closeCategoryExpensesBtn) {
+        closeCategoryExpensesBtn.addEventListener('click', () => closeModal('category-expenses-modal'));
+    }
+
     // Logout button
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {

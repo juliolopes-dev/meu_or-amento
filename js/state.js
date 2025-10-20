@@ -4,6 +4,8 @@
  */
 
 // Global State
+const currentDate = new Date();
+
 let state = {
     accounts: [],
     categories: [],
@@ -12,7 +14,11 @@ let state = {
     budgetPlan: {
         items: []
     },
-    currentView: 'dashboard'
+    currentView: 'dashboard',
+    selectedMonth: {
+        year: currentDate.getFullYear(),
+        month: currentDate.getMonth() + 1
+    }
 };
 
 let charts = {}; // To hold chart instances
