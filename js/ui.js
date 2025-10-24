@@ -28,6 +28,9 @@ function render() {
         case 'categories':
             renderCategories();
             break;
+        case 'payables':
+            renderPayables();
+            break;
     }
 }
 
@@ -318,7 +321,7 @@ function handleCategoryExpensesClick(categoryKey, categoryLabel, monthTransactio
     const subtitleEl = document.getElementById('category-expenses-subtitle');
     if (subtitleEl) {
         const countLabel = expenses.length === 1 ? 'lançamento' : 'lançamentos';
-        subtitleEl.textContent = `${expenses.length} ${countLabel} • Total ${formatCurrency(totalAmount)}`;
+        subtitleEl.textContent = `${expenses.length} ${countLabel} - Total ${formatCurrency(totalAmount)}`;
     }
 
     const contentEl = document.getElementById('category-expenses-content');
@@ -333,7 +336,7 @@ function handleCategoryExpensesClick(categoryKey, categoryLabel, monthTransactio
                     <div class="border border-slate-200 dark:border-slate-700 rounded-lg p-4 flex justify-between items-start gap-4">
                         <div>
                             <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">${t.description}</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${dateStr} • ${account?.name || 'Conta não informada'}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${dateStr} - ${account?.name || 'Conta não informada'}</p>
                         </div>
                         <span class="text-sm font-bold text-red-500">${formatCurrency(t.amount)}</span>
                     </div>
@@ -593,6 +596,141 @@ function renderCategories() {
         </div>
         ${categoriesHtml()}
     `;
+}
+
+/**
+ * Render Payables view
+ */
+function renderPayables() {
+    const summaryEl = document.getElementById('payables-summary');
+    const listEl = document.getElementById('payables-list');
+    if (!summaryEl || !listEl) {
+        return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const pending = state.payables.filter(p => p.status === 'pending');
+    const totalPendingAmount = pending.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    const overdue = pending.filter(p => {
+        if (!p.dueDate) return false;
+        const due = new Date(`${p.dueDate}T00:00:00`);
+        return due < today;
+    });
+    const totalOverdueAmount = overdue.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
+    const selected = state.selectedMonth || { year: today.getFullYear(), month: today.getMonth() + 1 };
+    const paidThisMonth = state.payables.filter(p => {
+        if (p.status !== 'paid' || !p.paidAt) return false;
+        const paidDate = new Date(p.paidAt);
+        return paidDate.getFullYear() === selected.year && (paidDate.getMonth() + 1) === selected.month;
+    });
+    const totalPaidAmount = paidThisMonth.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
+    summaryEl.innerHTML = `
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Contas pendentes</h3>
+            <p class="text-2xl font-bold text-slate-800 dark:text-slate-100">${pending.length}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400">${formatCurrency(totalPendingAmount)}</p>
+        </div>
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Atrasadas</h3>
+            <p class="text-2xl font-bold ${overdue.length ? 'text-red-500' : 'text-slate-800 dark:text-slate-100'}">${overdue.length}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400">${formatCurrency(totalOverdueAmount)}</p>
+        </div>
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Pagas no mes</h3>
+            <p class="text-2xl font-bold text-green-500">${paidThisMonth.length}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400">${formatCurrency(totalPaidAmount)}</p>
+        </div>
+    `;
+
+    if (!state.payables.length) {
+        listEl.innerHTML = `<p class="text-center py-10 text-slate-500 dark:text-slate-400">Nenhuma conta a pagar cadastrada.</p>`;
+        return;
+    }
+
+    const sorted = [...state.payables].sort((a, b) => {
+        if (a.status !== b.status) {
+            return a.status === 'pending' ? -1 : 1;
+        }
+        const dateA = a.dueDate ? new Date(`${a.dueDate}T00:00:00`) : new Date(8640000000000000);
+        const dateB = b.dueDate ? new Date(`${b.dueDate}T00:00:00`) : new Date(8640000000000000);
+        return dateA - dateB;
+    });
+
+    const rows = sorted.map(payable => {
+        const dueDate = payable.dueDate ? new Date(`${payable.dueDate}T00:00:00`) : null;
+        const dueLabel = dueDate ? dueDate.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '--';
+        const isOverdue = payable.status === 'pending' && dueDate && dueDate < today;
+        const rowClass = isOverdue ? 'bg-red-50 dark:bg-red-900/20' : '';
+        const statusBadge = payable.status === 'pending'
+            ? '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300">Pendente</span>'
+            : '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">Pago</span>';
+        const typeLabel = payable.isRecurring
+            ? '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">Fixa</span>'
+            : '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">Simples</span>';
+        const categoryName = payable.categoryName || (state.categories.find(c => c.id === payable.categoryId)?.name) || 'Sem categoria';
+        const accountName = payable.paidAccountId ? (state.accounts.find(a => a.id === payable.paidAccountId)?.name || '') : '';
+        const paidInfo = payable.status === 'paid' && payable.paidAt
+            ? `Pago em ${new Date(payable.paidAt).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}${accountName ? ` - ${accountName}` : ''}`
+            : '';
+
+        const actions = payable.status === 'pending'
+            ? `<div class="flex gap-3 flex-wrap">
+                    <button data-action="pay" data-id="${payable.id}" class="text-sm font-semibold text-green-600 hover:text-green-700">Pagar</button>
+                    <button data-action="edit" data-id="${payable.id}" class="text-sm text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100">Editar</button>
+                    <button data-action="delete" data-id="${payable.id}" class="text-sm text-red-600 hover:text-red-700">Excluir</button>
+                </div>`
+            : `<span class="text-xs text-slate-500 dark:text-slate-400">${paidInfo}</span>`;
+
+        const notesHtml = payable.notes
+            ? `<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${payable.notes}</p>`
+            : '';
+
+        return `
+            <tr class="${rowClass}">
+                <td class="p-3 text-sm text-slate-500 dark:text-slate-400">${dueLabel}</td>
+                <td class="p-3">
+                    <div class="flex flex-col">
+                        <span class="font-semibold text-slate-700 dark:text-slate-200">${payable.description}</span>
+                        ${notesHtml}
+                    </div>
+                </td>
+                <td class="p-3 text-sm text-slate-600 dark:text-slate-300">${categoryName}</td>
+                <td class="p-3 text-sm text-slate-600 dark:text-slate-300">${typeLabel}</td>
+                <td class="p-3 text-right font-semibold text-slate-800 dark:text-slate-100">${formatCurrency(payable.amount)}</td>
+                <td class="p-3 text-sm">${statusBadge}</td>
+                <td class="p-3 text-sm text-slate-600 dark:text-slate-300">${actions}</td>
+            </tr>
+        `;
+    }).join('');
+
+    listEl.innerHTML = `
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                <thead class="bg-slate-50 dark:bg-slate-900">
+                    <tr>
+                        <th class="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Vencimento</th>
+                        <th class="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Descrição</th>
+                        <th class="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Categoria</th>
+                        <th class="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Tipo</th>
+                        <th class="p-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Valor</th>
+                        <th class="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Status</th>
+                        <th class="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                    ${rows}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
 }
 
 /**

@@ -11,6 +11,7 @@ let state = {
     categories: [],
     transactions: [],
     transfers: [],
+    payables: [],
     budgetPlan: {
         items: []
     },
@@ -71,7 +72,43 @@ function loadMockData() {
             { id: 'b_2', categoryId: 'cat_2', type: 'fixed', value: 400.00 },
             { id: 'b_3', categoryId: 'cat_3', type: 'percentage', value: 10 }
         ]
-    }
+    };
+
+    state.payables = [
+        {
+            id: 'pay_1',
+            description: 'Aluguel',
+            amount: 1200.00,
+            dueDate: new Date(now.getFullYear(), now.getMonth(), 5).toISOString().split('T')[0],
+            categoryId: 'cat_1',
+            categoryName: 'Moradia',
+            status: 'pending',
+            isRecurring: true,
+            notes: 'Debitar todo dia 05'
+        },
+        {
+            id: 'pay_2',
+            description: 'Academia',
+            amount: 99.90,
+            dueDate: new Date(now.getFullYear(), now.getMonth(), 12).toISOString().split('T')[0],
+            categoryId: 'cat_6',
+            categoryName: 'Lazer',
+            status: 'pending',
+            isRecurring: true
+        },
+        {
+            id: 'pay_3',
+            description: 'Cartão de Crédito',
+            amount: 850.35,
+            dueDate: new Date(now.getFullYear(), now.getMonth(), 20).toISOString().split('T')[0],
+            categoryId: 'cat_root_1',
+            categoryName: 'Custo de Vida',
+            status: 'paid',
+            isRecurring: true,
+            paidAt: new Date(now.getFullYear(), now.getMonth(), 18).toISOString(),
+            paidAccountId: 'acc_2'
+        }
+    ];
 }
 
 /**

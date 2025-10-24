@@ -69,7 +69,7 @@ async function initializeDatabase() {
         await connection.query(`
             CREATE TABLE IF NOT EXISTS budget_items (
                 id VARCHAR(50) PRIMARY KEY,
-                category_id VARCHAR(50) NOT NULL,
+                category_id VARCHAR(50) NULL,
                 value DECIMAL(15, 2) NOT NULL,
                 type ENUM('fixed', 'percentage') NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -78,6 +78,26 @@ async function initializeDatabase() {
             )
         `);
         console.log('✅ Tabela "budget_items" criada');
+        // Create payables table
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS payables (
+                id VARCHAR(50) PRIMARY KEY,
+                description VARCHAR(255) NOT NULL,
+                amount DECIMAL(15, 2) NOT NULL,
+                due_date DATE NOT NULL,
+                category_id VARCHAR(50) NULL,
+                is_recurring TINYINT(1) DEFAULT 0,
+                status ENUM('pending', 'paid', 'cancelled') DEFAULT 'pending',
+                paid_at DATETIME NULL,
+                paid_account_id VARCHAR(50) NULL,
+                paid_transaction_id VARCHAR(50) NULL,
+                notes TEXT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+            )
+        `);
+        console.log('Tabela "payables" criada');
 
         console.log('\n🎉 Banco de dados inicializado com sucesso!');
 

@@ -33,6 +33,7 @@ const transactionRoutes = require('./routes/transactions');
 const budgetRoutes = require('./routes/budget');
 const transferRoutes = require('./routes/transfers');
 const aiRoutes = require('./routes/ai');
+const payableRoutes = require('./routes/payables');
 
 // Public routes
 app.use('/api/auth', authRoutes);
@@ -43,6 +44,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/budget', budgetRoutes);
 app.use('/api/transfers', transferRoutes);
+app.use('/api/payables', payableRoutes);
 app.use('/api/ai', aiRoutes);
 
 // Health check (simples e rápido)

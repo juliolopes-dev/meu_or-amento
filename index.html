@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Orçamento ✨</title>
+    <title>Meu Orçamento</title>
     
     <!-- External CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -50,27 +50,31 @@
         <aside class="w-64 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 flex-shrink-0 flex flex-col shadow-lg">
             <div class="p-6 border-b border-slate-200 dark:border-slate-700">
                 <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Meu Orçamento</h1>
-                <p class="text-xs text-slate-400">✨Gestão Financeira✨</p>
+                <p class="text-xs text-slate-400">Gestão Financeira</p>
             </div>
             <nav class="mt-4 px-2 flex-grow">
                 <a href="#" data-view="dashboard" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i>
                     Dashboard
                 </a>
                 <a href="#" data-view="budget" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+                    <i data-lucide="pie-chart" class="w-5 h-5 mr-3"></i>
                     Orçamento
                 </a>
+                <a href="#" data-view="payables" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <i data-lucide="calendar-clock" class="w-5 h-5 mr-3"></i>
+                    Contas a Pagar
+                </a>
                 <a href="#" data-view="transactions" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h.01M12 7h.01M16 7h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                    <i data-lucide="list-checks" class="w-5 h-5 mr-3"></i>
                     Lançamentos
                 </a>
                 <a href="#" data-view="accounts" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                    <i data-lucide="wallet" class="w-5 h-5 mr-3"></i>
                     Contas
                 </a>
                 <a href="#" data-view="categories" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 8v-3c0-1.1.9-2 2-2z"></path></svg>
+                    <i data-lucide="layers" class="w-5 h-5 mr-3"></i>
                     Categorias
                 </a>
             </nav>
@@ -171,6 +175,22 @@
                 </div>
                 <div id="transactions-list" class="bg-white dark:bg-slate-800 p-2 rounded-lg shadow-sm">
                     <!-- Transactions list will be injected here -->
+                </div>
+            </section>
+
+            <!-- Payables View -->
+            <section id="payables" class="main-content">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-4xl font-bold text-slate-900 dark:text-slate-100">Contas a Pagar</h2>
+                    <div class="flex gap-3">
+                        <button id="add-payable-btn" class="bg-slate-800 text-white px-5 py-2.5 rounded-lg hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 shadow-sm transition-colors">Nova Conta</button>
+                    </div>
+                </div>
+                <div id="payables-summary" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <!-- Summary cards -->
+                </div>
+                <div id="payables-list" class="bg-white dark:bg-slate-800 rounded-lg shadow-sm">
+                    <!-- Payables table -->
                 </div>
             </section>
 
@@ -482,6 +502,76 @@
             color: #94a3b8;
         }
     </style>
+
+    <!-- Payable Modal -->
+    <div id="payable-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-md">
+            <h3 class="text-xl font-semibold mb-6 text-slate-800 dark:text-slate-200" id="payable-modal-title">Nova Conta a Pagar</h3>
+            <form id="payable-form">
+                <input type="hidden" id="payable-id">
+                <div class="mb-4">
+                    <label for="payable-description" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Descrição</label>
+                    <input type="text" id="payable-description" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="payable-amount" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Valor</label>
+                        <input type="number" id="payable-amount" step="0.01" min="0" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required>
+                    </div>
+                    <div>
+                        <label for="payable-due-date" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Vencimento</label>
+                        <input type="date" id="payable-due-date" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label for="payable-category" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Categoria</label>
+                    <select id="payable-category" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required></select>
+                </div>
+                <div class="mb-4 flex items-center">
+                    <input type="checkbox" id="payable-recurring" class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-slate-300 rounded">
+                    <label for="payable-recurring" class="ml-2 text-sm text-slate-600 dark:text-slate-300">Conta fixa (gerar automaticamente para os próximos meses)</label>
+                </div>
+                <div class="mb-6">
+                    <label for="payable-notes" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Observações (opcional)</label>
+                    <textarea id="payable-notes" rows="3" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="cancel-payable" class="px-5 py-2.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition-colors">Cancelar</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-lg bg-slate-800 text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-800 dark:hover:bg-slate-300 shadow-sm transition-colors">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payable Pay Modal -->
+    <div id="payable-pay-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-md">
+            <div class="mb-4">
+                <h3 class="text-xl font-semibold text-slate-800 dark:text-slate-200">Pagar Conta</h3>
+                <p id="payable-pay-description" class="text-sm text-slate-500 dark:text-slate-400 mt-1"></p>
+            </div>
+            <form id="payable-pay-form">
+                <input type="hidden" id="payable-pay-id">
+                <div class="mb-4">
+                    <label for="payable-pay-account" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Conta de pagamento</label>
+                    <select id="payable-pay-account" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required></select>
+                </div>
+                <div class="mb-4">
+                    <label for="payable-pay-date" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Data do pagamento</label>
+                    <input type="date" id="payable-pay-date" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required>
+                </div>
+                <div class="mb-6 bg-slate-100 dark:bg-slate-700 rounded-lg p-4">
+                    <p class="text-sm text-slate-600 dark:text-slate-300">Valor</p>
+                    <p id="payable-pay-amount" class="text-2xl font-semibold text-slate-800 dark:text-slate-100">R$ 0,00</p>
+                    <p id="payable-pay-due" class="text-xs text-slate-500 dark:text-slate-400 mt-1"></p>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="cancel-payable-pay" class="px-5 py-2.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition-colors">Cancelar</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-lg bg-green-600 text-white hover:bg-green-700 shadow-sm transition-colors">Confirmar Pagamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Category Modal -->
     <div id="category-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">

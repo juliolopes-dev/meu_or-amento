@@ -46,7 +46,7 @@ async function addAuthTables() {
         console.log('✅ Tabela "users" criada');
 
         // Add tenant_id to existing tables
-        const tables = ['accounts', 'categories', 'transactions', 'budget_items'];
+        const tables = ['accounts', 'categories', 'transactions', 'budget_items', 'payables'];
         
         for (const table of tables) {
             // Check if column exists

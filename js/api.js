@@ -85,6 +85,15 @@ const transfersAPI = {
     delete: (id) => apiFetch(`/transfers/${id}`, { method: 'DELETE' })
 };
 
+// Payables API
+const payablesAPI = {
+    getAll: () => apiFetch('/payables'),
+    create: (data) => apiFetch('/payables', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id, data) => apiFetch(`/payables/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id) => apiFetch(`/payables/${id}`, { method: 'DELETE' }),
+    pay: (id, data) => apiFetch(`/payables/${id}/pay`, { method: 'POST', body: JSON.stringify(data) })
+};
+
 // AI Analysis API
 const aiAPI = {
     analyze: (systemPrompt, userQuery) => apiFetch('/ai/analyze', {
@@ -96,12 +105,13 @@ const aiAPI = {
 // Load all data from backend
 async function loadDataFromBackend() {
     try {
-        const [accounts, categories, transactions, budgetItems, transfers] = await Promise.all([
+        const [accounts, categories, transactions, budgetItems, transfers, payables] = await Promise.all([
             accountsAPI.getAll(),
             categoriesAPI.getAll(),
             transactionsAPI.getAll(),
             budgetAPI.getAll(),
-            transfersAPI.getAll()
+            transfersAPI.getAll(),
+            payablesAPI.getAll()
         ]);
 
         state.accounts = accounts.map(a => ({
@@ -138,6 +148,21 @@ async function loadDataFromBackend() {
             categoryId: item.category_id,
             value: parseFloat(item.value),
             type: item.type
+        }));
+
+        state.payables = payables.map(p => ({
+            id: p.id,
+            description: p.description,
+            amount: parseFloat(p.amount),
+            dueDate: p.due_date,
+            categoryId: p.category_id,
+            categoryName: p.category_name || "",
+            status: p.status,
+            isRecurring: !!p.is_recurring,
+            paidAt: p.paid_at,
+            paidAccountId: p.paid_account_id,
+            paidTransactionId: p.paid_transaction_id,
+            notes: p.notes || ""
         }));
 
         console.log('✅ Dados carregados do backend:', state);

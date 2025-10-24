@@ -10,6 +10,49 @@ const themeToggleButton = document.getElementById('theme-toggle');
 const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
 const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
 
+const formatDateForInput = (date) => {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+        return '';
+    }
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const mapAccountResponse = (account) => ({
+    id: account.id,
+    name: account.name,
+    balance: parseFloat(account.balance) || 0,
+    icon: account.icon || 'wallet',
+    color: account.color || 'purple'
+});
+
+const mapTransactionResponse = (transaction) => ({
+    id: transaction.id,
+    description: transaction.description,
+    amount: parseFloat(transaction.amount),
+    type: transaction.type,
+    accountId: transaction.account_id,
+    categoryId: transaction.category_id,
+    date: transaction.date
+});
+
+const mapPayableResponse = (payable) => ({
+    id: payable.id,
+    description: payable.description,
+    amount: parseFloat(payable.amount),
+    dueDate: payable.due_date,
+    categoryId: payable.category_id,
+    categoryName: payable.category_name || '',
+    status: payable.status,
+    isRecurring: !!payable.is_recurring,
+    paidAt: payable.paid_at,
+    paidAccountId: payable.paid_account_id,
+    paidTransactionId: payable.paid_transaction_id,
+    notes: payable.notes || ''
+});
+
 /**
  * Navigation
  */
@@ -385,6 +428,47 @@ function openModal(modalId, options = {}) {
              fromAccountSelect.innerHTML = accountOptions;
              toAccountSelect.innerHTML = accountOptions;
              break;
+        case 'payable-modal':
+             document.getElementById('payable-modal-title').textContent = id ? 'Editar Conta a Pagar' : 'Nova Conta a Pagar';
+             document.getElementById('payable-id').value = id || '';
+             const payableCategorySelect = document.getElementById('payable-category');
+             const selectedPayableCategory = id ? (state.payables.find(p => p.id === id)?.categoryId) : null;
+             payableCategorySelect.innerHTML = getCategoryOptionsHtml(selectedPayableCategory);
+             if (!state.categories.length) {
+                 payableCategorySelect.innerHTML = '<option value="">Cadastre uma categoria</option>';
+             }
+             const payableItem = id ? state.payables.find(p => p.id === id) : null;
+             document.getElementById('payable-description').value = payableItem ? payableItem.description : '';
+             document.getElementById('payable-amount').value = payableItem ? payableItem.amount : '';
+             document.getElementById('payable-due-date').value = payableItem && payableItem.dueDate ? payableItem.dueDate : formatDateForInput(new Date());
+             document.getElementById('payable-recurring').checked = payableItem ? !!payableItem.isRecurring : false;
+             document.getElementById('payable-notes').value = payableItem ? payableItem.notes || '' : '';
+             if (payableItem && payableItem.categoryId) {
+                 payableCategorySelect.value = payableItem.categoryId;
+             }
+             break;
+        case 'payable-pay-modal':
+             const payableToPay = state.payables.find(p => p.id === id);
+             if (!payableToPay) {
+                 return;
+             }
+             if (state.accounts.length === 0) {
+                 showAlert('Cadastre uma conta antes de registrar o pagamento.', 'Atenção', 'warning');
+                 return;
+             }
+             document.getElementById('payable-pay-id').value = payableToPay.id;
+             document.getElementById('payable-pay-description').textContent = `${payableToPay.description} • ${payableToPay.categoryName || 'Sem categoria'}`;
+             document.getElementById('payable-pay-amount').textContent = formatCurrency(payableToPay.amount);
+             const dueInfo = payableToPay.dueDate ? new Date(`${payableToPay.dueDate}T00:00:00`).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Sem vencimento definido';
+             document.getElementById('payable-pay-due').textContent = `Vencimento: ${dueInfo}`;
+             const payAccountSelect = document.getElementById('payable-pay-account');
+             payAccountSelect.innerHTML = state.accounts.map(a => `<option value="${a.id}">${a.name} (${formatCurrency(a.balance)})</option>`).join('');
+             payAccountSelect.value = state.accounts[0].id;
+             const today = new Date();
+             const defaultPaymentDate = payableToPay.dueDate ? new Date(`${payableToPay.dueDate}T00:00:00`) : new Date();
+             const paymentDate = defaultPaymentDate > today ? defaultPaymentDate : today;
+             document.getElementById('payable-pay-date').value = formatDateForInput(paymentDate);
+             break;
         case 'account-modal':
              document.getElementById('account-modal-title').textContent = id ? 'Editar Conta' : 'Adicionar Conta';
              document.getElementById('account-id').value = id || '';
@@ -531,6 +615,57 @@ function setupEventListeners() {
         if(e.target.classList.contains('edit-account-btn')) openModal('account-modal', {id: e.target.dataset.id});
         if(e.target.classList.contains('delete-account-btn')) deleteAccount(e.target.dataset.id);
     });
+
+    const addPayableBtn = document.getElementById('add-payable-btn');
+    if (addPayableBtn) {
+        addPayableBtn.addEventListener('click', () => {
+            if (state.categories.length === 0) {
+                showAlert('Por favor, crie uma categoria primeiro.', 'Atenção', 'warning');
+                return;
+            }
+            openModal('payable-modal');
+        });
+    }
+    const cancelPayableBtn = document.getElementById('cancel-payable');
+    if (cancelPayableBtn) {
+        cancelPayableBtn.addEventListener('click', () => closeModal('payable-modal'));
+    }
+    const payableForm = document.getElementById('payable-form');
+    if (payableForm) {
+        payableForm.addEventListener('submit', handlePayableForm);
+    }
+    const payablesList = document.getElementById('payables-list');
+    if (payablesList) {
+        payablesList.addEventListener('click', (event) => {
+            const button = event.target.closest('button[data-action]');
+            if (!button) return;
+            const action = button.dataset.action;
+            const id = button.dataset.id;
+            if (!id) return;
+
+            if (action === 'pay') {
+                if (state.accounts.length === 0) {
+                    showAlert('Cadastre uma conta antes de registrar o pagamento.', 'Atenção', 'warning');
+                    return;
+                }
+                openModal('payable-pay-modal', { id });
+            }
+            if (action === 'edit') {
+                openModal('payable-modal', { id });
+            }
+            if (action === 'delete') {
+                deletePayable(id);
+            }
+        });
+    }
+    const cancelPayablePayBtn = document.getElementById('cancel-payable-pay');
+    if (cancelPayablePayBtn) {
+        cancelPayablePayBtn.addEventListener('click', () => closeModal('payable-pay-modal'));
+    }
+    const payablePayForm = document.getElementById('payable-pay-form');
+    if (payablePayForm) {
+        payablePayForm.addEventListener('submit', handlePayablePayForm);
+    }
 
     document.getElementById('add-main-category-btn').addEventListener('click', () => openModal('category-modal'));
     document.getElementById('cancel-category').addEventListener('click', () => closeModal('category-modal'));
@@ -757,6 +892,149 @@ function showConfirm(message, title = 'Confirmar', onConfirm, type = 'warning') 
 }
 
 /**
+ * Payable Form Handler
+ */
+async function handlePayableForm(e) {
+    e.preventDefault();
+    const id = document.getElementById('payable-id').value;
+    const description = document.getElementById('payable-description').value.trim();
+    const amountValue = parseFloat(document.getElementById('payable-amount').value);
+    const dueDate = document.getElementById('payable-due-date').value;
+    const categoryId = document.getElementById('payable-category').value;
+    const isRecurring = document.getElementById('payable-recurring').checked;
+    const notes = document.getElementById('payable-notes').value.trim();
+
+    if (!description || !categoryId || !dueDate || Number.isNaN(amountValue) || amountValue <= 0) {
+        showAlert('Preencha todos os campos obrigatórios com valores válidos.', 'Atenção', 'warning');
+        return;
+    }
+
+    try {
+        if (id) {
+            await payablesAPI.update(id, {
+                description,
+                amount: amountValue,
+                due_date: dueDate,
+                category_id: categoryId,
+                is_recurring: isRecurring,
+                notes
+            });
+            const payable = state.payables.find(p => p.id === id);
+            if (payable) {
+                payable.description = description;
+                payable.amount = amountValue;
+                payable.dueDate = dueDate;
+                payable.categoryId = categoryId;
+                payable.categoryName = state.categories.find(c => c.id === categoryId)?.name || payable.categoryName || '';
+                payable.isRecurring = isRecurring;
+                payable.notes = notes;
+            }
+            showAlert('Conta a pagar atualizada com sucesso!', 'Sucesso', 'success');
+        } else {
+            const newId = `pay_${Date.now()}`;
+            await payablesAPI.create({
+                id: newId,
+                description,
+                amount: amountValue,
+                due_date: dueDate,
+                category_id: categoryId,
+                is_recurring: isRecurring,
+                notes
+            });
+            const category = state.categories.find(c => c.id === categoryId);
+            state.payables.push({
+                id: newId,
+                description,
+                amount: amountValue,
+                dueDate,
+                categoryId,
+                categoryName: category ? category.name : '',
+                status: 'pending',
+                isRecurring,
+                notes,
+                paidAt: null,
+                paidAccountId: null,
+                paidTransactionId: null
+            });
+            showAlert('Conta a pagar criada com sucesso!', 'Sucesso', 'success');
+        }
+
+        closeModal('payable-modal');
+        render();
+    } catch (error) {
+        console.error('Error saving payable:', error);
+        showAlert(error.message || 'Erro ao salvar conta a pagar.', 'Erro', 'error');
+    }
+}
+
+/**
+ * Delete Payable
+ */
+function deletePayable(id) {
+    showConfirm(
+        'Tem certeza que deseja excluir esta conta a pagar?',
+        'Excluir Conta a Pagar',
+        async () => {
+            try {
+                await payablesAPI.delete(id);
+                state.payables = state.payables.filter(p => p.id !== id);
+                render();
+                showAlert('Conta a pagar excluída com sucesso!', 'Sucesso', 'success');
+            } catch (error) {
+                console.error('Error deleting payable:', error);
+                showAlert(error.message || 'Erro ao excluir conta a pagar.', 'Erro', 'error');
+            }
+        },
+        'danger'
+    );
+}
+
+/**
+ * Refresh data after paying a payable
+ */
+async function refreshAfterPayablePayment() {
+    const [accounts, transactions, payables] = await Promise.all([
+        accountsAPI.getAll(),
+        transactionsAPI.getAll(),
+        payablesAPI.getAll()
+    ]);
+    state.accounts = accounts.map(mapAccountResponse);
+    state.transactions = transactions.map(mapTransactionResponse);
+    state.payables = payables.map(mapPayableResponse);
+}
+
+/**
+ * Handle Payable Payment Form
+ */
+async function handlePayablePayForm(e) {
+    e.preventDefault();
+    const payableId = document.getElementById('payable-pay-id').value;
+    const accountId = document.getElementById('payable-pay-account').value;
+    const paymentDate = document.getElementById('payable-pay-date').value;
+
+    if (!accountId) {
+        showAlert('Selecione uma conta para registrar o pagamento.', 'Atenção', 'warning');
+        return;
+    }
+
+    try {
+        await payablesAPI.pay(payableId, {
+            account_id: accountId,
+            payment_date: paymentDate
+        });
+
+        await refreshAfterPayablePayment();
+
+        closeModal('payable-pay-modal');
+        render();
+        showAlert('Pagamento registrado com sucesso!', 'Sucesso', 'success');
+    } catch (error) {
+        console.error('Error paying payable:', error);
+        showAlert(error.message || 'Erro ao registrar pagamento.', 'Erro', 'error');
+    }
+}
+
+/**
  * Logout function
  */
 function logout() {
@@ -771,7 +1049,6 @@ function logout() {
         'danger'
     );
 }
-
 /**
  * Initialize Application
  */
