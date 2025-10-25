@@ -159,6 +159,8 @@ async function loadDataFromBackend() {
             categoryName: p.category_name || "",
             status: p.status,
             isRecurring: !!p.is_recurring,
+            totalInstallments: p.total_installments !== null ? Number(p.total_installments) : null,
+            currentInstallment: p.current_installment !== null ? Number(p.current_installment) : null,
             paidAt: p.paid_at,
             paidAccountId: p.paid_account_id,
             paidTransactionId: p.paid_transaction_id,

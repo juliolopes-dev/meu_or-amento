@@ -87,13 +87,13 @@
                         </div>
                         <div class="ml-3 flex-1 overflow-hidden">
                             <p id="user-name" class="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">Usuário</p>
-                            <p id="tenant-name" class="text-xs text-slate-500 dark:text-slate-400 truncate">Organização</p>
+                            <p id="tenant-name" class="text-xs text-slate-500 truncate">Organização</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Theme Toggle -->
-                <button id="theme-toggle" class="w-full flex items-center justify-center px-4 py-2 rounded-lg text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                <button id="theme-toggle" class="w-full flex items-center justify-center px-4 py-2 rounded-lg text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                     <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
                     <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm.707 8.486a1 1 0 01-1.414 0l-.707-.707a1 1 0 011.414-1.414l.707.707a1 1 0 010 1.414zM4 11a1 1 0 100-2H3a1 1 0 100 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
                     <span class="ml-2">Alternar Tema</span>
@@ -238,22 +238,22 @@
     
     <!-- Budget Modal -->
     <div id="budget-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-md">
+        <div class="modal-card w-full max-w-md">
             <h3 class="text-xl font-semibold mb-6 text-slate-800 dark:text-slate-200" id="budget-modal-title">Adicionar ao Orçamento</h3>
             <form id="budget-form">
                 <input type="hidden" id="budget-id">
                 <div class="mb-4">
-                    <label for="budget-category" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Categoria</label>
-                    <select id="budget-category" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required></select>
+                    <label for="budget-category" class="block text-sm font-medium">Categoria</label>
+                    <select id="budget-category" class="mt-1 block w-full rounded-xl" required></select>
                 </div>
                 <div class="grid grid-cols-3 gap-4 mb-6">
                     <div class="col-span-2">
-                        <label for="budget-value" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Valor</label>
-                        <input type="number" id="budget-value" step="0.01" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required>
+                        <label for="budget-value" class="block text-sm font-medium">Valor</label>
+                        <input type="number" id="budget-value" step="0.01" class="mt-1 block w-full rounded-xl" required>
                     </div>
                     <div>
-                        <label for="budget-type" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Tipo</label>
-                        <select id="budget-type" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500">
+                        <label for="budget-type" class="block text-sm font-medium">Tipo</label>
+                        <select id="budget-type" class="mt-1 block w-full rounded-xl">
                             <option value="fixed">Fixo (R$)</option>
                             <option value="percentage">Porcentagem (%)</option>
                         </select>
@@ -269,22 +269,22 @@
     
     <!-- Transaction Modal -->
     <div id="transaction-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-md">
+        <div class="modal-card w-full max-w-md">
             <h3 class="text-xl font-semibold mb-6 text-slate-800 dark:text-slate-200" id="transaction-modal-title">Adicionar Lançamento</h3>
             <form id="transaction-form">
                 <input type="hidden" id="transaction-id">
                 <div class="mb-4">
-                    <label for="transaction-description" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Descrição</label>
-                    <input type="text" id="transaction-description" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required>
+                    <label for="transaction-description" class="block text-sm font-medium">Descrição</label>
+                    <input type="text" id="transaction-description" class="mt-1 block w-full rounded-xl" required>
                 </div>
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label for="transaction-amount" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Valor</label>
-                        <input type="number" id="transaction-amount" step="0.01" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required>
+                        <label for="transaction-amount" class="block text-sm font-medium">Valor</label>
+                        <input type="number" id="transaction-amount" step="0.01" class="mt-1 block w-full rounded-xl" required>
                     </div>
                     <div>
-                        <label for="transaction-type" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Tipo</label>
-                        <select id="transaction-type" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500">
+                        <label for="transaction-type" class="block text-sm font-medium">Tipo</label>
+                        <select id="transaction-type" class="mt-1 block w-full rounded-xl">
                             <option value="expense">Despesa</option>
                             <option value="income">Receita</option>
                         </select>
@@ -292,17 +292,17 @@
                 </div>
                  <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label for="transaction-account" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Conta</label>
-                        <select id="transaction-account" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required></select>
+                        <label for="transaction-account" class="block text-sm font-medium">Conta</label>
+                        <select id="transaction-account" class="mt-1 block w-full rounded-xl" required></select>
                     </div>
                     <div>
-                        <label for="transaction-category" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Categoria</label>
-                        <select id="transaction-category" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required></select>
+                        <label for="transaction-category" class="block text-sm font-medium">Categoria</label>
+                        <select id="transaction-category" class="mt-1 block w-full rounded-xl" required></select>
                     </div>
                 </div>
                 <div class="mb-6">
-                    <label for="transaction-date" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Data</label>
-                    <input type="date" id="transaction-date" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required>
+                    <label for="transaction-date" class="block text-sm font-medium">Data</label>
+                    <input type="date" id="transaction-date" class="mt-1 block w-full rounded-xl" required>
                 </div>
                 <div class="flex justify-end space-x-3">
                     <button type="button" id="cancel-transaction" class="px-5 py-2.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition-colors">Cancelar</button>
@@ -505,39 +505,45 @@
 
     <!-- Payable Modal -->
     <div id="payable-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-md">
-            <h3 class="text-xl font-semibold mb-6 text-slate-800 dark:text-slate-200" id="payable-modal-title">Nova Conta a Pagar</h3>
+        <div class="modal-card w-full max-w-md">
+            <h3 class="text-xl font-semibold mb-6 text-slate-900 dark:text-white" id="payable-modal-title">Nova Conta a Pagar</h3>
             <form id="payable-form">
                 <input type="hidden" id="payable-id">
                 <div class="mb-4">
-                    <label for="payable-description" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Descrição</label>
-                    <input type="text" id="payable-description" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required>
+                    <label for="payable-description" class="block text-sm font-medium">Descrição</label>
+                    <input type="text" id="payable-description" class="mt-1 block w-full rounded-xl" required>
                 </div>
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label for="payable-amount" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Valor</label>
-                        <input type="number" id="payable-amount" step="0.01" min="0" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required>
+                        <label for="payable-amount" class="block text-sm font-medium">Valor</label>
+                        <input type="number" id="payable-amount" step="0.01" min="0" class="mt-1 block w-full rounded-xl" required>
                     </div>
                     <div>
-                        <label for="payable-due-date" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Vencimento</label>
-                        <input type="date" id="payable-due-date" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required>
+                        <label for="payable-due-date" class="block text-sm font-medium">Vencimento</label>
+                        <input type="date" id="payable-due-date" class="mt-1 block w-full rounded-xl" required>
                     </div>
                 </div>
                 <div class="mb-4">
-                    <label for="payable-category" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Categoria</label>
-                    <select id="payable-category" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required></select>
+                    <label for="payable-category" class="block text-sm font-medium">Categoria</label>
+                    <select id="payable-category" class="mt-1 block w-full rounded-xl" required></select>
                 </div>
                 <div class="mb-4 flex items-center">
-                    <input type="checkbox" id="payable-recurring" class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-slate-300 rounded">
-                    <label for="payable-recurring" class="ml-2 text-sm text-slate-600 dark:text-slate-300">Conta fixa (gerar automaticamente para os próximos meses)</label>
+                    <input type="checkbox" id="payable-recurring" class="h-4 w-4 text-purple-400 focus:ring-purple-400 border-slate-600 rounded">
+                    <label for="payable-recurring" class="ml-2 text-sm text-slate-300">Conta fixa (gerar automaticamente para os próximos meses)</label>
+                </div>
+                <div class="mb-4 opacity-50 pointer-events-none" id="payable-installments-wrapper">
+                    <label for="payable-installments" class="block text-sm font-medium">Parcelas (opcional)</label>
+                    <input type="number" min="1" id="payable-installments" class="mt-1 block w-full rounded-xl" placeholder="Ex: 3" disabled>
+                    <p id="payable-installments-info" class="text-xs text-slate-500 mt-1 hidden"></p>
+                    <p class="text-xs text-slate-500 mt-1">Use apenas para contas fixas. Deixe em branco para repetir indefinidamente.</p>
                 </div>
                 <div class="mb-6">
-                    <label for="payable-notes" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Observações (opcional)</label>
-                    <textarea id="payable-notes" rows="3" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500"></textarea>
+                    <label for="payable-notes" class="block text-sm font-medium">Observações (opcional)</label>
+                    <textarea id="payable-notes" rows="3" class="mt-1 block w-full rounded-xl"></textarea>
                 </div>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" id="cancel-payable" class="px-5 py-2.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-5 py-2.5 rounded-lg bg-slate-800 text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-800 dark:hover:bg-slate-300 shadow-sm transition-colors">Salvar</button>
+                <div class="modal-actions flex justify-end gap-3 pt-2">
+                    <button type="button" id="cancel-payable" class="px-5 py-2.5 btn-secondary">Cancelar</button>
+                    <button type="submit" class="px-5 py-2.5 btn-primary">Salvar</button>
                 </div>
             </form>
         </div>
@@ -545,29 +551,29 @@
 
     <!-- Payable Pay Modal -->
     <div id="payable-pay-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-md">
+        <div class="modal-card w-full max-w-md">
             <div class="mb-4">
-                <h3 class="text-xl font-semibold text-slate-800 dark:text-slate-200">Pagar Conta</h3>
-                <p id="payable-pay-description" class="text-sm text-slate-500 dark:text-slate-400 mt-1"></p>
+                <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Pagar Conta</h3>
+                <p id="payable-pay-description" class="text-sm text-slate-500 dark:text-slate-300 mt-1"></p>
             </div>
             <form id="payable-pay-form">
                 <input type="hidden" id="payable-pay-id">
                 <div class="mb-4">
                     <label for="payable-pay-account" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Conta de pagamento</label>
-                    <select id="payable-pay-account" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required></select>
+                    <select id="payable-pay-account" class="mt-1 block w-full rounded-xl" required></select>
                 </div>
                 <div class="mb-4">
                     <label for="payable-pay-date" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Data do pagamento</label>
-                    <input type="date" id="payable-pay-date" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required>
+                    <input type="date" id="payable-pay-date" class="mt-1 block w-full rounded-xl" required>
                 </div>
-                <div class="mb-6 bg-slate-100 dark:bg-slate-700 rounded-lg p-4">
-                    <p class="text-sm text-slate-600 dark:text-slate-300">Valor</p>
-                    <p id="payable-pay-amount" class="text-2xl font-semibold text-slate-800 dark:text-slate-100">R$ 0,00</p>
-                    <p id="payable-pay-due" class="text-xs text-slate-500 dark:text-slate-400 mt-1"></p>
+                <div class="mb-6 bg-slate-900/40 border border-white/10 rounded-2xl p-4">
+                    <p class="text-sm text-slate-400">Valor</p>
+                    <p id="payable-pay-amount" class="text-2xl font-semibold text-white">R$ 0,00</p>
+                    <p id="payable-pay-due" class="text-xs text-slate-400 mt-1"></p>
                 </div>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" id="cancel-payable-pay" class="px-5 py-2.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-5 py-2.5 rounded-lg bg-green-600 text-white hover:bg-green-700 shadow-sm transition-colors">Confirmar Pagamento</button>
+                <div class="modal-actions flex justify-end gap-3">
+                    <button type="button" id="cancel-payable-pay" class="px-5 py-2.5 btn-secondary">Cancelar</button>
+                    <button type="submit" class="px-5 py-2.5 btn-primary">Confirmar Pagamento</button>
                 </div>
             </form>
         </div>
@@ -575,17 +581,17 @@
 
     <!-- Category Modal -->
     <div id="category-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
-         <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-md">
+         <div class="modal-card w-full max-w-md">
             <h3 class="text-xl font-semibold mb-6 text-slate-800 dark:text-slate-200" id="category-modal-title">Adicionar Categoria</h3>
             <form id="category-form">
                 <input type="hidden" id="category-id">
                 <input type="hidden" id="category-parent-id-hidden">
                 <div class="mb-4">
-                    <label for="category-name" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Nome da Categoria</label>
-                    <input type="text" id="category-name" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required>
+                    <label for="category-name" class="block text-sm font-medium">Nome da Categoria</label>
+                    <input type="text" id="category-name" class="mt-1 block w-full rounded-xl" required>
                 </div>
                 <div class="mb-6" id="parent-category-display-wrapper">
-                    <label class="block text-sm font-medium text-slate-600 dark:text-slate-300">Categoria Pai</label>
+                    <label class="block text-sm font-medium">Categoria Pai</label>
                     <p id="parent-category-display" class="mt-1 p-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"></p>
                 </div>
                  <div class="flex justify-end space-x-3">
@@ -602,7 +608,7 @@
             <div class="flex justify-between items-start gap-4 mb-4">
                 <div>
                     <h3 id="category-expenses-title" class="text-2xl font-semibold text-slate-800 dark:text-slate-200">Gastos da Categoria</h3>
-                    <p id="category-expenses-subtitle" class="text-sm text-slate-500 dark:text-slate-400 mt-1"></p>
+                    <p id="category-expenses-subtitle" class="text-sm text-slate-400 mt-1"></p>
                 </div>
                 <button id="close-category-expenses" class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 text-2xl leading-none">&times;</button>
             </div>
@@ -613,7 +619,7 @@
     </div>
     <!-- Generic Alert Modal -->
     <div id="alert-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4 z-50">
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-md">
+        <div class="modal-card w-full max-w-md">
             <div id="alert-icon" class="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full"></div>
             <h3 id="alert-title" class="text-xl font-semibold text-center mb-2 text-slate-900 dark:text-slate-100"></h3>
             <p id="alert-message" class="text-center text-slate-600 dark:text-slate-400 mb-6"></p>
@@ -625,7 +631,7 @@
 
     <!-- Generic Confirm Modal -->
     <div id="confirm-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4 z-50">
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-md">
+        <div class="modal-card w-full max-w-md">
             <div id="confirm-icon" class="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full"></div>
             <h3 id="confirm-title" class="text-xl font-semibold text-center mb-2 text-slate-900 dark:text-slate-100"></h3>
             <p id="confirm-message" class="text-center text-slate-600 dark:text-slate-400 mb-6"></p>
@@ -668,3 +674,17 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

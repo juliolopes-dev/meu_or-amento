@@ -47,6 +47,8 @@ const mapPayableResponse = (payable) => ({
     categoryName: payable.category_name || '',
     status: payable.status,
     isRecurring: !!payable.is_recurring,
+    totalInstallments: payable.total_installments !== null ? Number(payable.total_installments) : null,
+    currentInstallment: payable.current_installment !== null ? Number(payable.current_installment) : null,
     paidAt: payable.paid_at,
     paidAccountId: payable.paid_account_id,
     paidTransactionId: payable.paid_transaction_id,
@@ -443,6 +445,25 @@ function openModal(modalId, options = {}) {
              document.getElementById('payable-due-date').value = payableItem && payableItem.dueDate ? payableItem.dueDate : formatDateForInput(new Date());
              document.getElementById('payable-recurring').checked = payableItem ? !!payableItem.isRecurring : false;
              document.getElementById('payable-notes').value = payableItem ? payableItem.notes || '' : '';
+             const installmentsInput = document.getElementById('payable-installments');
+             if (installmentsInput) {
+                 installmentsInput.value = payableItem && payableItem.totalInstallments ? payableItem.totalInstallments : '';
+             }
+             const installmentsInfo = document.getElementById('payable-installments-info');
+             if (installmentsInfo) {
+                 if (payableItem && payableItem.isRecurring && payableItem.currentInstallment) {
+                     if (payableItem.totalInstallments) {
+                         installmentsInfo.textContent = `Parcela atual: ${payableItem.currentInstallment}/${payableItem.totalInstallments}`;
+                     } else {
+                         installmentsInfo.textContent = `Parcela atual: ${payableItem.currentInstallment}`;
+                     }
+                     installmentsInfo.classList.remove('hidden');
+                 } else {
+                     installmentsInfo.textContent = '';
+                     installmentsInfo.classList.add('hidden');
+                 }
+             }
+             togglePayableInstallmentsField();
              if (payableItem && payableItem.categoryId) {
                  payableCategorySelect.value = payableItem.categoryId;
              }
@@ -457,7 +478,7 @@ function openModal(modalId, options = {}) {
                  return;
              }
              document.getElementById('payable-pay-id').value = payableToPay.id;
-             document.getElementById('payable-pay-description').textContent = `${payableToPay.description} • ${payableToPay.categoryName || 'Sem categoria'}`;
+             document.getElementById('payable-pay-description').textContent = `${payableToPay.description} - ${payableToPay.categoryName || 'Sem categoria'}`;
              document.getElementById('payable-pay-amount').textContent = formatCurrency(payableToPay.amount);
              const dueInfo = payableToPay.dueDate ? new Date(`${payableToPay.dueDate}T00:00:00`).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Sem vencimento definido';
              document.getElementById('payable-pay-due').textContent = `Vencimento: ${dueInfo}`;
@@ -633,6 +654,11 @@ function setupEventListeners() {
     const payableForm = document.getElementById('payable-form');
     if (payableForm) {
         payableForm.addEventListener('submit', handlePayableForm);
+    }
+    const payableRecurringCheckbox = document.getElementById('payable-recurring');
+    if (payableRecurringCheckbox) {
+        payableRecurringCheckbox.addEventListener('change', togglePayableInstallmentsField);
+        togglePayableInstallmentsField();
     }
     const payablesList = document.getElementById('payables-list');
     if (payablesList) {
@@ -892,6 +918,27 @@ function showConfirm(message, title = 'Confirmar', onConfirm, type = 'warning') 
 }
 
 /**
+ * Helper to toggle installments field based on checkbox state
+ */
+function togglePayableInstallmentsField() {
+    const recurringCheckbox = document.getElementById('payable-recurring');
+    const wrapper = document.getElementById('payable-installments-wrapper');
+    const input = document.getElementById('payable-installments');
+    const info = document.getElementById('payable-installments-info');
+    if (!recurringCheckbox || !wrapper || !input) {
+        return;
+    }
+    const enabled = recurringCheckbox.checked;
+    input.disabled = !enabled;
+    wrapper.classList.toggle('opacity-50', !enabled);
+    wrapper.classList.toggle('pointer-events-none', !enabled);
+    if (!enabled && info) {
+        info.classList.add('hidden');
+        info.textContent = '';
+    }
+}
+
+/**
  * Payable Form Handler
  */
 async function handlePayableForm(e) {
@@ -903,9 +950,30 @@ async function handlePayableForm(e) {
     const categoryId = document.getElementById('payable-category').value;
     const isRecurring = document.getElementById('payable-recurring').checked;
     const notes = document.getElementById('payable-notes').value.trim();
+    const installmentsInput = document.getElementById('payable-installments');
+    const installmentsValue = installmentsInput ? installmentsInput.value : '';
+    let totalInstallments = installmentsValue ? parseInt(installmentsValue, 10) : null;
+    const existingPayable = id ? state.payables.find(p => p.id === id) : null;
 
     if (!description || !categoryId || !dueDate || Number.isNaN(amountValue) || amountValue <= 0) {
         showAlert('Preencha todos os campos obrigatórios com valores válidos.', 'Atenção', 'warning');
+        return;
+    }
+
+    if (installmentsValue && (Number.isNaN(totalInstallments) || totalInstallments <= 0)) {
+        showAlert('Informe uma quantidade de parcelas válida.', 'Atenção', 'warning');
+        return;
+    }
+
+    if (!isRecurring) {
+        totalInstallments = null;
+    } else if (
+        existingPayable &&
+        totalInstallments !== null &&
+        existingPayable.currentInstallment &&
+        totalInstallments < existingPayable.currentInstallment
+    ) {
+        showAlert('Quantidade de parcelas não pode ser menor que a parcela atual.', 'Atenção', 'warning');
         return;
     }
 
@@ -917,9 +985,10 @@ async function handlePayableForm(e) {
                 due_date: dueDate,
                 category_id: categoryId,
                 is_recurring: isRecurring,
-                notes
+                notes,
+                total_installments: totalInstallments
             });
-            const payable = state.payables.find(p => p.id === id);
+            const payable = existingPayable;
             if (payable) {
                 payable.description = description;
                 payable.amount = amountValue;
@@ -928,6 +997,13 @@ async function handlePayableForm(e) {
                 payable.categoryName = state.categories.find(c => c.id === categoryId)?.name || payable.categoryName || '';
                 payable.isRecurring = isRecurring;
                 payable.notes = notes;
+                if (isRecurring) {
+                    payable.totalInstallments = totalInstallments;
+                    payable.currentInstallment = payable.currentInstallment || 1;
+                } else {
+                    payable.totalInstallments = null;
+                    payable.currentInstallment = null;
+                }
             }
             showAlert('Conta a pagar atualizada com sucesso!', 'Sucesso', 'success');
         } else {
@@ -939,7 +1015,8 @@ async function handlePayableForm(e) {
                 due_date: dueDate,
                 category_id: categoryId,
                 is_recurring: isRecurring,
-                notes
+                notes,
+                total_installments: totalInstallments
             });
             const category = state.categories.find(c => c.id === categoryId);
             state.payables.push({
@@ -951,6 +1028,8 @@ async function handlePayableForm(e) {
                 categoryName: category ? category.name : '',
                 status: 'pending',
                 isRecurring,
+                totalInstallments,
+                currentInstallment: isRecurring ? 1 : null,
                 notes,
                 paidAt: null,
                 paidAccountId: null,

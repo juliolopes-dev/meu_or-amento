@@ -3,9 +3,8 @@ require('dotenv').config();
 
 async function initializeDatabase() {
     let connection;
-    
+
     try {
-        // Connect to MySQL
         connection = await mysql.createConnection({
             host: process.env.DB_HOST,
             user: process.env.DB_USER,
@@ -13,44 +12,73 @@ async function initializeDatabase() {
             port: process.env.DB_PORT
         });
 
-        console.log('✅ Conectado ao MySQL');
+        console.log('OK  Conectado ao MySQL');
 
-        // Create database if not exists
         await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\``);
-        console.log(`✅ Database '${process.env.DB_NAME}' criado/verificado`);
-
-        // Use the database
+        console.log(`OK  Database '${process.env.DB_NAME}' verificado`);
         await connection.query(`USE \`${process.env.DB_NAME}\``);
 
-        // Create accounts table
         await connection.query(`
-            CREATE TABLE IF NOT EXISTS accounts (
+            CREATE TABLE IF NOT EXISTS tenants (
                 id VARCHAR(50) PRIMARY KEY,
-                name VARCHAR(100) NOT NULL,
-                balance DECIMAL(15, 2) NOT NULL DEFAULT 0,
+                name VARCHAR(100) NOT NULL UNIQUE,
+                slug VARCHAR(100) NOT NULL UNIQUE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )
         `);
-        console.log('✅ Tabela "accounts" criada');
+        console.log('OK  Tabela "tenants" criada');
 
-        // Create categories table
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                id VARCHAR(50) PRIMARY KEY,
+                tenant_id VARCHAR(50) NOT NULL,
+                email VARCHAR(100) NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                name VARCHAR(100) NOT NULL,
+                lastname VARCHAR(100),
+                role ENUM('admin', 'user') DEFAULT 'user',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_email_per_tenant (tenant_id, email),
+                FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+            )
+        `);
+        console.log('OK  Tabela "users" criada');
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS accounts (
+                id VARCHAR(50) PRIMARY KEY,
+                tenant_id VARCHAR(50) NOT NULL,
+                name VARCHAR(100) NOT NULL,
+                balance DECIMAL(15, 2) NOT NULL DEFAULT 0,
+                icon VARCHAR(50) DEFAULT 'wallet',
+                color VARCHAR(50) DEFAULT 'purple',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+            )
+        `);
+        console.log('OK  Tabela "accounts" criada');
+
         await connection.query(`
             CREATE TABLE IF NOT EXISTS categories (
                 id VARCHAR(50) PRIMARY KEY,
+                tenant_id VARCHAR(50) NOT NULL,
                 name VARCHAR(100) NOT NULL,
                 parent_id VARCHAR(50) NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
                 FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE CASCADE
             )
         `);
-        console.log('✅ Tabela "categories" criada');
+        console.log('OK  Tabela "categories" criada');
 
-        // Create transactions table
         await connection.query(`
             CREATE TABLE IF NOT EXISTS transactions (
                 id VARCHAR(50) PRIMARY KEY,
+                tenant_id VARCHAR(50) NOT NULL,
                 description VARCHAR(255) NOT NULL,
                 amount DECIMAL(15, 2) NOT NULL,
                 type ENUM('income', 'expense') NOT NULL,
@@ -59,34 +87,39 @@ async function initializeDatabase() {
                 date DATE NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
                 FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
                 FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
             )
         `);
-        console.log('✅ Tabela "transactions" criada');
+        console.log('OK  Tabela "transactions" criada');
 
-        // Create budget_items table
         await connection.query(`
             CREATE TABLE IF NOT EXISTS budget_items (
                 id VARCHAR(50) PRIMARY KEY,
+                tenant_id VARCHAR(50) NOT NULL,
                 category_id VARCHAR(50) NULL,
                 value DECIMAL(15, 2) NOT NULL,
                 type ENUM('fixed', 'percentage') NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
                 FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
             )
         `);
-        console.log('✅ Tabela "budget_items" criada');
-        // Create payables table
+        console.log('OK  Tabela "budget_items" criada');
+
         await connection.query(`
             CREATE TABLE IF NOT EXISTS payables (
                 id VARCHAR(50) PRIMARY KEY,
+                tenant_id VARCHAR(50) NOT NULL,
                 description VARCHAR(255) NOT NULL,
                 amount DECIMAL(15, 2) NOT NULL,
                 due_date DATE NOT NULL,
                 category_id VARCHAR(50) NULL,
                 is_recurring TINYINT(1) DEFAULT 0,
+                total_installments INT NULL,
+                current_installment INT NULL,
                 status ENUM('pending', 'paid', 'cancelled') DEFAULT 'pending',
                 paid_at DATETIME NULL,
                 paid_account_id VARCHAR(50) NULL,
@@ -94,15 +127,16 @@ async function initializeDatabase() {
                 notes TEXT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+                FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+                FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
+                FOREIGN KEY (paid_account_id) REFERENCES accounts(id) ON DELETE SET NULL,
+                FOREIGN KEY (paid_transaction_id) REFERENCES transactions(id) ON DELETE SET NULL
             )
         `);
-        console.log('Tabela "payables" criada');
-
-        console.log('\n🎉 Banco de dados inicializado com sucesso!');
-
+        console.log('OK  Tabela "payables" criada');
+        console.log('\nBanco de dados inicializado com sucesso!');
     } catch (error) {
-        console.error('❌ Erro ao inicializar banco de dados:', error.message);
+        console.error('Erro ao inicializar banco de dados:', error.message);
     } finally {
         if (connection) {
             await connection.end();

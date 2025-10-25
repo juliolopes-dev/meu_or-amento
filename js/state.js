@@ -84,6 +84,8 @@ function loadMockData() {
             categoryName: 'Moradia',
             status: 'pending',
             isRecurring: true,
+            totalInstallments: 12,
+            currentInstallment: 1,
             notes: 'Debitar todo dia 05'
         },
         {
@@ -94,7 +96,9 @@ function loadMockData() {
             categoryId: 'cat_6',
             categoryName: 'Lazer',
             status: 'pending',
-            isRecurring: true
+            isRecurring: true,
+            totalInstallments: null,
+            currentInstallment: 1
         },
         {
             id: 'pay_3',
@@ -105,6 +109,8 @@ function loadMockData() {
             categoryName: 'Custo de Vida',
             status: 'paid',
             isRecurring: true,
+            totalInstallments: 6,
+            currentInstallment: 4,
             paidAt: new Date(now.getFullYear(), now.getMonth(), 18).toISOString(),
             paidAccountId: 'acc_2'
         }

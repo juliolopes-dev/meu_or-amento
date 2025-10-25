@@ -61,6 +61,12 @@ function renderDashboard() {
         const tDate = new Date(t.date);
         return tDate >= startOfMonth && tDate <= endOfMonth;
     });
+    const monthPendingPayables = state.payables.filter(p => {
+        if (p.status !== 'pending' || !p.dueDate) return false;
+        const due = new Date(`${p.dueDate}T00:00:00`);
+        return due.getFullYear() === selectedDate.getFullYear() && due.getMonth() === selectedDate.getMonth();
+    });
+    const monthPendingAmount = monthPendingPayables.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
     
     const totalIncome = monthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
     const totalExpenses = monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
@@ -78,6 +84,12 @@ function renderDashboard() {
     }
 
     summaryCardsContent.innerHTML = `
+        <div class="bg-gradient-to-br from-rose-500 via-rose-400 to-amber-300 text-white p-4 rounded-lg shadow-sm relative overflow-hidden">
+            <div class="absolute inset-0 bg-white/10 blur-3xl opacity-30 pointer-events-none"></div>
+            <h3 class="text-sm font-medium mb-1">Contas a pagar (${monthName})</h3>
+            <p class="text-2xl font-bold">${formatCurrency(monthPendingAmount)}</p>
+            <p class="text-xs opacity-80 mt-1">${monthPendingPayables.length} ${monthPendingPayables.length === 1 ? 'conta' : 'contas'}</p>
+        </div>
         <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
             <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Saldo Total</h3>
             <p class="text-2xl font-bold text-slate-800 dark:text-slate-100">${formatCurrency(totalBalance)}</p>
@@ -640,7 +652,7 @@ function renderPayables() {
             <p class="text-xs text-slate-500 dark:text-slate-400">${formatCurrency(totalOverdueAmount)}</p>
         </div>
         <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
-            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Pagas no mes</h3>
+            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Pagas no mês</h3>
             <p class="text-2xl font-bold text-green-500">${paidThisMonth.length}</p>
             <p class="text-xs text-slate-500 dark:text-slate-400">${formatCurrency(totalPaidAmount)}</p>
         </div>
@@ -668,22 +680,31 @@ function renderPayables() {
         const statusBadge = payable.status === 'pending'
             ? '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300">Pendente</span>'
             : '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">Pago</span>';
+        const installmentBadge = payable.isRecurring
+            ? (payable.totalInstallments
+                ? `${payable.currentInstallment || 1}/${payable.totalInstallments}`
+                : (payable.currentInstallment ? `${payable.currentInstallment}` : ''))
+            : '';
         const typeLabel = payable.isRecurring
-            ? '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">Fixa</span>'
+            ? `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">Fixa${installmentBadge ? ` (${installmentBadge})` : ''}</span>`
             : '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">Simples</span>';
         const categoryName = payable.categoryName || (state.categories.find(c => c.id === payable.categoryId)?.name) || 'Sem categoria';
         const accountName = payable.paidAccountId ? (state.accounts.find(a => a.id === payable.paidAccountId)?.name || '') : '';
         const paidInfo = payable.status === 'paid' && payable.paidAt
             ? `Pago em ${new Date(payable.paidAt).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}${accountName ? ` - ${accountName}` : ''}`
             : '';
-
+        const editButton = `<button data-action="edit" data-id="${payable.id}" class="text-sm text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100">Editar</button>`;
+        const deleteButton = `<button data-action="delete" data-id="${payable.id}" class="text-sm text-red-600 hover:text-red-700">Excluir</button>`;
         const actions = payable.status === 'pending'
             ? `<div class="flex gap-3 flex-wrap">
                     <button data-action="pay" data-id="${payable.id}" class="text-sm font-semibold text-green-600 hover:text-green-700">Pagar</button>
-                    <button data-action="edit" data-id="${payable.id}" class="text-sm text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100">Editar</button>
-                    <button data-action="delete" data-id="${payable.id}" class="text-sm text-red-600 hover:text-red-700">Excluir</button>
+                    ${editButton}
+                    ${deleteButton}
                 </div>`
-            : `<span class="text-xs text-slate-500 dark:text-slate-400">${paidInfo}</span>`;
+            : `<div class="flex gap-3 flex-wrap items-center">
+                    ${editButton}
+                    ${paidInfo ? `<span class="text-xs text-slate-500 dark:text-slate-400">${paidInfo}</span>` : ''}
+                </div>`;
 
         const notesHtml = payable.notes
             ? `<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${payable.notes}</p>`
