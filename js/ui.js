@@ -83,13 +83,16 @@ function renderDashboard() {
         incomeExpenseChartTitle.textContent = `Receitas vs Despesas (Últimos 6 meses até ${monthName})`;
     }
 
-    summaryCardsContent.innerHTML = `
+    const payablesCardHtml = monthPendingPayables.length ? `
         <div class="bg-gradient-to-br from-rose-500 via-rose-400 to-amber-300 text-white p-4 rounded-lg shadow-sm relative overflow-hidden">
             <div class="absolute inset-0 bg-white/10 blur-3xl opacity-30 pointer-events-none"></div>
             <h3 class="text-sm font-medium mb-1">Contas a pagar (${monthName})</h3>
             <p class="text-2xl font-bold">${formatCurrency(monthPendingAmount)}</p>
             <p class="text-xs opacity-80 mt-1">${monthPendingPayables.length} ${monthPendingPayables.length === 1 ? 'conta' : 'contas'}</p>
-        </div>
+        </div>` : '';
+
+    summaryCardsContent.innerHTML = `
+        ${payablesCardHtml}
         <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
             <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Saldo Total</h3>
             <p class="text-2xl font-bold text-slate-800 dark:text-slate-100">${formatCurrency(totalBalance)}</p>
