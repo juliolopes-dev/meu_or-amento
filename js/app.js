@@ -442,7 +442,19 @@ function openModal(modalId, options = {}) {
              const payableItem = id ? state.payables.find(p => p.id === id) : null;
              document.getElementById('payable-description').value = payableItem ? payableItem.description : '';
              document.getElementById('payable-amount').value = payableItem ? payableItem.amount : '';
-             document.getElementById('payable-due-date').value = payableItem && payableItem.dueDate ? payableItem.dueDate : formatDateForInput(new Date());
+             const dueInput = document.getElementById('payable-due-date');
+            if (payableItem && payableItem.dueDate) {
+                const parsedDue = parseDateValue(payableItem.dueDate);
+                if (parsedDue) {
+                    dueInput.value = formatDateForInput(parsedDue);
+                } else if (typeof payableItem.dueDate === 'string') {
+                    dueInput.value = payableItem.dueDate.split(' ')[0];
+                } else {
+                    dueInput.value = formatDateForInput(new Date());
+                }
+            } else {
+                dueInput.value = formatDateForInput(new Date());
+            }
              document.getElementById('payable-recurring').checked = payableItem ? !!payableItem.isRecurring : false;
              document.getElementById('payable-notes').value = payableItem ? payableItem.notes || '' : '';
              const installmentsInput = document.getElementById('payable-installments');
@@ -480,13 +492,16 @@ function openModal(modalId, options = {}) {
              document.getElementById('payable-pay-id').value = payableToPay.id;
              document.getElementById('payable-pay-description').textContent = `${payableToPay.description} - ${payableToPay.categoryName || 'Sem categoria'}`;
              document.getElementById('payable-pay-amount').textContent = formatCurrency(payableToPay.amount);
-             const dueInfo = payableToPay.dueDate ? new Date(`${payableToPay.dueDate}T00:00:00`).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Sem vencimento definido';
-             document.getElementById('payable-pay-due').textContent = `Vencimento: ${dueInfo}`;
+            const parsedDueDate = parseDateValue(payableToPay.dueDate);
+            const dueInfo = parsedDueDate
+                ? parsedDueDate.toLocaleDateString('pt-BR', { timeZone: 'UTC' })
+                : 'Sem vencimento definido';
+            document.getElementById('payable-pay-due').textContent = `Vencimento: ${dueInfo}`;
              const payAccountSelect = document.getElementById('payable-pay-account');
              payAccountSelect.innerHTML = state.accounts.map(a => `<option value="${a.id}">${a.name} (${formatCurrency(a.balance)})</option>`).join('');
              payAccountSelect.value = state.accounts[0].id;
-             const today = new Date();
-             const defaultPaymentDate = payableToPay.dueDate ? new Date(`${payableToPay.dueDate}T00:00:00`) : new Date();
+            const today = new Date();
+            const defaultPaymentDate = parsedDueDate || new Date();
              const paymentDate = defaultPaymentDate > today ? defaultPaymentDate : today;
              document.getElementById('payable-pay-date').value = formatDateForInput(paymentDate);
              break;

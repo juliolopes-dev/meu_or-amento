@@ -34,6 +34,79 @@ function render() {
     }
 }
 
+function parseDateValue(value) {
+    if (!value) return null;
+
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? null : value;
+    }
+
+    if (typeof value === 'number') {
+        const fromNumber = new Date(value);
+        return Number.isNaN(fromNumber.getTime()) ? null : fromNumber;
+    }
+
+    const raw = String(value).trim();
+    if (!raw || raw === '0000-00-00' || raw.startsWith('0000-00-00')) {
+        return null;
+    }
+
+    const direct = new Date(raw);
+    if (!Number.isNaN(direct.getTime())) return direct;
+
+    const normalizedIso = new Date(raw.replace(/\s+/, 'T'));
+    if (!Number.isNaN(normalizedIso.getTime())) return normalizedIso;
+
+    const createFromParts = (year, month, day) => {
+        const y = Number(year);
+        const m = Number(month);
+        const d = Number(day);
+        if ([y, m, d].some(num => Number.isNaN(num))) {
+            return null;
+        }
+        if (m < 1 || m > 12 || d < 1 || d > 31) {
+            return null;
+        }
+        const candidate = new Date(y, m - 1, d);
+        return (candidate.getFullYear() === y && candidate.getMonth() === m - 1 && candidate.getDate() === d)
+            ? candidate
+            : null;
+    };
+
+    const slashParts = raw.split('/');
+    if (slashParts.length === 3) {
+        // dd/mm/yyyy or yyyy/mm/dd
+        if (slashParts[0].length === 4) {
+            const fromYMD = createFromParts(slashParts[0], slashParts[1], slashParts[2]);
+            if (fromYMD) return fromYMD;
+        } else {
+            const fromDMY = createFromParts(slashParts[2], slashParts[1], slashParts[0]);
+            if (fromDMY) return fromDMY;
+        }
+    }
+
+    const dashParts = raw.split('-');
+    if (dashParts.length === 3) {
+        if (dashParts[0].length === 4) {
+            const fromYMD = createFromParts(dashParts[0], dashParts[1], dashParts[2]);
+            if (fromYMD) return fromYMD;
+        } else {
+            const fromDMY = createFromParts(dashParts[2], dashParts[1], dashParts[0]);
+            if (fromDMY) return fromDMY;
+        }
+    }
+
+    if (/^\d{8}$/.test(raw)) {
+        const year = raw.slice(0, 4);
+        const month = raw.slice(4, 6);
+        const day = raw.slice(6, 8);
+        const fromCompact = createFromParts(year, month, day);
+        if (fromCompact) return fromCompact;
+    }
+
+    return null;
+}
+
 /**
  * Render Dashboard view
  */
@@ -62,8 +135,9 @@ function renderDashboard() {
         return tDate >= startOfMonth && tDate <= endOfMonth;
     });
     const monthPendingPayables = state.payables.filter(p => {
-        if (p.status !== 'pending' || !p.dueDate) return false;
-        const due = new Date(`${p.dueDate}T00:00:00`);
+        if (p.status !== 'pending') return false;
+        const due = parseDateValue(p.dueDate);
+        if (!due) return false;
         return due.getFullYear() === selectedDate.getFullYear() && due.getMonth() === selectedDate.getMonth();
     });
     const monthPendingAmount = monthPendingPayables.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
@@ -83,16 +157,16 @@ function renderDashboard() {
         incomeExpenseChartTitle.textContent = `Receitas vs Despesas (Últimos 6 meses até ${monthName})`;
     }
 
-    const payablesCardHtml = monthPendingPayables.length ? `
-        <div class="bg-gradient-to-br from-rose-500 via-rose-400 to-amber-300 text-white p-4 rounded-lg shadow-sm relative overflow-hidden">
-            <div class="absolute inset-0 bg-white/10 blur-3xl opacity-30 pointer-events-none"></div>
-            <h3 class="text-sm font-medium mb-1">Contas a pagar (${monthName})</h3>
-            <p class="text-2xl font-bold">${formatCurrency(monthPendingAmount)}</p>
-            <p class="text-xs opacity-80 mt-1">${monthPendingPayables.length} ${monthPendingPayables.length === 1 ? 'conta' : 'contas'}</p>
-        </div>` : '';
+    const payablesSubtitle = monthPendingPayables.length
+        ? `${monthPendingPayables.length} ${monthPendingPayables.length === 1 ? 'conta pendente' : 'contas pendentes'}`
+        : 'Nenhuma conta pendente';
 
     summaryCardsContent.innerHTML = `
-        ${payablesCardHtml}
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Contas a pagar (${monthName})</h3>
+            <p class="text-2xl font-bold text-slate-800 dark:text-slate-100">${formatCurrency(monthPendingAmount)}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${payablesSubtitle}</p>
+        </div>
         <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
             <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Saldo Total</h3>
             <p class="text-2xl font-bold text-slate-800 dark:text-slate-100">${formatCurrency(totalBalance)}</p>
@@ -629,9 +703,8 @@ function renderPayables() {
     const pending = state.payables.filter(p => p.status === 'pending');
     const totalPendingAmount = pending.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
     const overdue = pending.filter(p => {
-        if (!p.dueDate) return false;
-        const due = new Date(`${p.dueDate}T00:00:00`);
-        return due < today;
+        const due = parseDateValue(p.dueDate);
+        return due && due < today;
     });
     const totalOverdueAmount = overdue.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
 
@@ -670,13 +743,13 @@ function renderPayables() {
         if (a.status !== b.status) {
             return a.status === 'pending' ? -1 : 1;
         }
-        const dateA = a.dueDate ? new Date(`${a.dueDate}T00:00:00`) : new Date(8640000000000000);
-        const dateB = b.dueDate ? new Date(`${b.dueDate}T00:00:00`) : new Date(8640000000000000);
+        const dateA = parseDateValue(a.dueDate) || new Date(8640000000000000);
+        const dateB = parseDateValue(b.dueDate) || new Date(8640000000000000);
         return dateA - dateB;
     });
 
     const rows = sorted.map(payable => {
-        const dueDate = payable.dueDate ? new Date(`${payable.dueDate}T00:00:00`) : null;
+        const dueDate = parseDateValue(payable.dueDate);
         const dueLabel = dueDate ? dueDate.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '--';
         const isOverdue = payable.status === 'pending' && dueDate && dueDate < today;
         const rowClass = isOverdue ? 'bg-red-50 dark:bg-red-900/20' : '';
