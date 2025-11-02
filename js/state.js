@@ -20,7 +20,10 @@ let state = {
         year: currentDate.getFullYear(),
         month: currentDate.getMonth() + 1
     },
-    hideBalances: false
+    hideBalances: false,
+    payablesFilter: {
+        month: null
+    }
 };
 
 let charts = {}; // To hold chart instances

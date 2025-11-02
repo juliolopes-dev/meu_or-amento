@@ -848,39 +848,110 @@ function renderPayables() {
         return;
     }
 
+    const monthInput = document.getElementById('payables-month-filter');
+    const resetFilterBtn = document.getElementById('reset-payables-filter');
+
+    if (monthInput) {
+        monthInput.value = state.payablesFilter.month
+            ? `${state.payablesFilter.month.year}-${String(state.payablesFilter.month.month).padStart(2, '0')}`
+            : '';
+        monthInput.onchange = (event) => {
+            const value = event.target.value;
+            if (value) {
+                const [yearStr, monthStr] = value.split('-');
+                const year = Number(yearStr);
+                const month = Number(monthStr);
+                if (!Number.isNaN(year) && !Number.isNaN(month) && month >= 1 && month <= 12) {
+                    state.payablesFilter.month = { year, month };
+                } else {
+                    state.payablesFilter.month = null;
+                    event.target.value = '';
+                }
+            } else {
+                state.payablesFilter.month = null;
+            }
+            render();
+        };
+    }
+
+    if (resetFilterBtn) {
+        resetFilterBtn.onclick = () => {
+            if (state.payablesFilter.month) {
+                state.payablesFilter.month = null;
+                if (monthInput) monthInput.value = '';
+                render();
+            }
+        };
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const normalizedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-    const pending = state.payables.filter(p => p.status === 'pending');
-    const totalPendingAmount = pending.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-    const overdue = pending.filter(p => {
-        const due = parseDateValue(p.dueDate);
-        return due && due < today;
-    });
-    const totalOverdueAmount = overdue.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    const filterMonth = state.payablesFilter?.month || null;
+    const filterActive = Boolean(filterMonth);
+
+    const filteredPayables = filterActive
+        ? state.payables.filter(payable => {
+            const due = parseDateValue(payable.dueDate);
+            if (!due) return false;
+            return due.getFullYear() === filterMonth.year && (due.getMonth() + 1) === filterMonth.month;
+        })
+        : state.payables;
 
     const selected = state.selectedMonth || { year: today.getFullYear(), month: today.getMonth() + 1 };
-    const paidThisMonth = state.payables.filter(p => {
-        if (p.status !== 'paid' || !p.paidAt) return false;
-        const paidDate = new Date(p.paidAt);
-        return paidDate.getFullYear() === selected.year && (paidDate.getMonth() + 1) === selected.month;
-    });
-    const totalPaidAmount = paidThisMonth.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
+    let summaryPending = [];
+    let totalPendingAmount = 0;
+    let summaryOverdue = [];
+    let totalOverdueAmount = 0;
+    let summaryPaid = [];
+    let totalPaidAmount = 0;
+    let paidCardTitle = 'Pagas no mes';
+
+    if (filterActive) {
+        summaryPending = filteredPayables.filter(p => p.status === 'pending');
+        totalPendingAmount = summaryPending.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+        summaryOverdue = summaryPending.filter(p => {
+            const due = parseDateValue(p.dueDate);
+            if (!due) return false;
+            const normalizedDue = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+            return normalizedDue < normalizedToday;
+        });
+        totalOverdueAmount = summaryOverdue.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+        summaryPaid = filteredPayables.filter(p => p.status === 'paid');
+        totalPaidAmount = summaryPaid.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+        paidCardTitle = 'Pagas no mes selecionado';
+    } else {
+        summaryPending = state.payables.filter(p => p.status === 'pending');
+        totalPendingAmount = summaryPending.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+        summaryOverdue = summaryPending.filter(p => {
+            const due = parseDateValue(p.dueDate);
+            return due && due < today;
+        });
+        totalOverdueAmount = summaryOverdue.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+        summaryPaid = state.payables.filter(p => {
+            if (p.status !== 'paid' || !p.paidAt) return false;
+            const paidDate = new Date(p.paidAt);
+            return paidDate.getFullYear() === selected.year && (paidDate.getMonth() + 1) === selected.month;
+        });
+        totalPaidAmount = summaryPaid.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    }
 
     summaryEl.innerHTML = `
         <div class="card-surface summary-card p-4" data-animate="summary">
             <h3 class="text-sm text-red-500 dark:text-red-400 mb-1">Contas pendentes</h3>
-            <p class="metric-value text-2xl font-bold">${pending.length}</p>
+            <p class="metric-value text-2xl font-bold">${summaryPending.length}</p>
             <p class="text-xs text-slate-500 dark:text-slate-400">${formatCurrency(totalPendingAmount)}</p>
         </div>
         <div class="card-surface summary-card p-4" data-animate="summary">
             <h3 class="text-sm text-red-500 dark:text-red-400 mb-1">Atrasadas</h3>
-            <p class="metric-value text-2xl font-bold ${overdue.length ? 'text-red-500' : ''}">${overdue.length}</p>
+            <p class="metric-value text-2xl font-bold ${summaryOverdue.length ? 'text-red-500' : ''}">${summaryOverdue.length}</p>
             <p class="text-xs text-slate-500 dark:text-slate-400">${formatCurrency(totalOverdueAmount)}</p>
         </div>
         <div class="card-surface summary-card p-4" data-animate="summary">
-            <h3 class="text-sm text-red-500 dark:text-red-400 mb-1">Pagas no mês</h3>
-            <p class="metric-value text-2xl font-bold text-green-500">${paidThisMonth.length}</p>
+            <h3 class="text-sm text-red-500 dark:text-red-400 mb-1">${paidCardTitle}</h3>
+            <p class="metric-value text-2xl font-bold text-green-500">${summaryPaid.length}</p>
             <p class="text-xs text-slate-500 dark:text-slate-400">${formatCurrency(totalPaidAmount)}</p>
         </div>
     `;
@@ -890,7 +961,14 @@ function renderPayables() {
         return;
     }
 
-    const sorted = [...state.payables].sort((a, b) => {
+    if (filterActive && !filteredPayables.length) {
+        listEl.innerHTML = `<p class="text-center py-10 text-slate-500 dark:text-slate-400">Nenhuma conta a pagar encontrada para o mes selecionado.</p>`;
+        return;
+    }
+
+    const basePayables = filterActive ? filteredPayables : state.payables;
+
+    const sorted = [...basePayables].sort((a, b) => {
         if (a.status !== b.status) {
             return a.status === 'pending' ? -1 : 1;
         }
@@ -902,7 +980,8 @@ function renderPayables() {
     const rows = sorted.map(payable => {
         const dueDate = parseDateValue(payable.dueDate);
         const dueLabel = dueDate ? dueDate.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '--';
-        const isOverdue = payable.status === 'pending' && dueDate && dueDate < today;
+        const normalizedDue = dueDate ? new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate()) : null;
+        const isOverdue = payable.status === 'pending' && normalizedDue && normalizedDue < normalizedToday;
         const rowClass = isOverdue ? 'bg-red-50 dark:bg-red-900/20' : '';
         const statusBadge = payable.status === 'pending'
             ? '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300">Pendente</span>'
