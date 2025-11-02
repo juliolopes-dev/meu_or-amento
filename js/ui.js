@@ -257,7 +257,7 @@ function renderDashboard() {
 
     summaryCardsContent.innerHTML = `
         <div class="card-surface summary-card p-4">
-            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Contas a pagar (${monthName})</h3>
+            <h3 class="text-sm text-red-500 dark:text-red-400 mb-1">Contas a pagar (${monthName})</h3>
             <p class="metric-value text-2xl font-bold">${formatCurrency(monthPendingAmount)}</p>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${payablesSubtitle}</p>
         </div>
@@ -270,11 +270,11 @@ function renderDashboard() {
             <p class="metric-value text-2xl font-bold text-green-500">${formatCurrency(totalIncome)}</p>
         </div>
         <div class="card-surface summary-card p-4">
-            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Despesas (${monthName})</h3>
+            <h3 class="text-sm text-red-500 dark:text-red-400 mb-1">Despesas (${monthName})</h3>
             <p class="metric-value text-2xl font-bold text-red-500">${formatCurrency(totalExpenses)}</p>
         </div>
         <div class="card-surface summary-card p-4">
-            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Balanço (${monthName})</h3>
+            <h3 class="text-sm text-red-500 dark:text-red-400 mb-1">Balanço (${monthName})</h3>
             <p class="metric-value text-2xl font-bold ${totalIncome - totalExpenses >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(totalIncome - totalExpenses)}</p>
         </div>
         <div class="card-surface summary-card p-4 flex flex-col">
@@ -869,17 +869,17 @@ function renderPayables() {
 
     summaryEl.innerHTML = `
         <div class="card-surface summary-card p-4" data-animate="summary">
-            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Contas pendentes</h3>
+            <h3 class="text-sm text-red-500 dark:text-red-400 mb-1">Contas pendentes</h3>
             <p class="metric-value text-2xl font-bold">${pending.length}</p>
             <p class="text-xs text-slate-500 dark:text-slate-400">${formatCurrency(totalPendingAmount)}</p>
         </div>
         <div class="card-surface summary-card p-4" data-animate="summary">
-            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Atrasadas</h3>
+            <h3 class="text-sm text-red-500 dark:text-red-400 mb-1">Atrasadas</h3>
             <p class="metric-value text-2xl font-bold ${overdue.length ? 'text-red-500' : ''}">${overdue.length}</p>
             <p class="text-xs text-slate-500 dark:text-slate-400">${formatCurrency(totalOverdueAmount)}</p>
         </div>
         <div class="card-surface summary-card p-4" data-animate="summary">
-            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Pagas no mês</h3>
+            <h3 class="text-sm text-red-500 dark:text-red-400 mb-1">Pagas no mês</h3>
             <p class="metric-value text-2xl font-bold text-green-500">${paidThisMonth.length}</p>
             <p class="text-xs text-slate-500 dark:text-slate-400">${formatCurrency(totalPaidAmount)}</p>
         </div>
