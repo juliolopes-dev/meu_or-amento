@@ -55,6 +55,12 @@ const mapPayableResponse = (payable) => ({
     notes: payable.notes || ''
 });
 
+function toggleBalanceVisibility() {
+    state.hideBalances = !state.hideBalances;
+    localStorage.setItem('hideBalances', state.hideBalances ? '1' : '0');
+    render();
+}
+
 /**
  * Navigation
  */
@@ -561,6 +567,14 @@ function updateThemeIcons(isDark) {
 function setupEventListeners() {
     navLinks.forEach(link => link.addEventListener('click', (e) => { e.preventDefault(); navigateTo(link.dataset.view); }));
     
+    document.addEventListener('click', (event) => {
+        const toggleBtn = event.target.closest('[data-action="toggle-balances"]');
+        if (toggleBtn) {
+            event.preventDefault();
+            toggleBalanceVisibility();
+        }
+    });
+
     themeToggleButton.addEventListener('click', () => {
         const isDark = document.documentElement.classList.toggle('dark');
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
@@ -1162,6 +1176,11 @@ async function init() {
     } else {
         document.documentElement.classList.remove('dark');
         updateThemeIcons(false);
+    }
+    
+    const storedHideBalances = localStorage.getItem('hideBalances');
+    if (storedHideBalances !== null) {
+        state.hideBalances = storedHideBalances === '1';
     }
     
     setupEventListeners();

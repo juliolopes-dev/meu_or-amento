@@ -1,0 +1,63 @@
+/* Responsive enhancements and layout tokens */
+
+:root {
+    --layout-max-width: 1280px;
+}
+
+main,
+.main-container {
+    max-width: var(--layout-max-width);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+@media (max-width: 1024px) {
+    #dashboard-progress-section {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    #dashboard-summary-cards {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+    }
+
+    .modal-content {
+        width: 100%;
+        margin: 0 1rem;
+    }
+}
+
+@media (max-width: 640px) {
+    header .actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .nav-sidebar {
+        width: 100%;
+        position: static;
+    }
+
+    .summary-card h3 {
+        font-size: 0.75rem;
+    }
+
+    .summary-card .metric-value {
+        font-size: 1.5rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

@@ -19,7 +19,8 @@ let state = {
     selectedMonth: {
         year: currentDate.getFullYear(),
         month: currentDate.getMonth() + 1
-    }
+    },
+    hideBalances: false
 };
 
 let charts = {}; // To hold chart instances

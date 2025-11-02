@@ -42,6 +42,7 @@
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/styles-responsive.css">
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
 
@@ -220,7 +221,7 @@
 
     <!-- Modals -->
     <!-- Gemini Analysis Modal -->
-    <div id="gemini-analysis-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
+    <div id="gemini-analysis-modal" class="modal modal-overlay fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-semibold text-slate-800 dark:text-slate-200">✨ Análise Financeira com Gemini</h3>
@@ -237,92 +238,92 @@
     </div>
     
     <!-- Budget Modal -->
-    <div id="budget-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-md">
-            <h3 class="text-xl font-semibold mb-6 text-slate-800 dark:text-slate-200" id="budget-modal-title">Adicionar ao Orçamento</h3>
-            <form id="budget-form">
+    <div id="budget-modal" class="modal modal-overlay fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
+        <div class="modal-panel" data-animate="modal">
+            <h3 class="modal-title" id="budget-modal-title">Adicionar ao Orçamento</h3>
+            <form id="budget-form" class="form-layout">
                 <input type="hidden" id="budget-id">
-                <div class="mb-4">
-                    <label for="budget-category" class="block text-sm font-medium">Categoria</label>
-                    <select id="budget-category" class="mt-1 block w-full rounded-xl" required></select>
+                <div class="form-field">
+                    <label for="budget-category" class="form-label">Categoria</label>
+                    <select id="budget-category" class="input-control focus-ring" required></select>
                 </div>
-                <div class="grid grid-cols-3 gap-4 mb-6">
-                    <div class="col-span-2">
-                        <label for="budget-value" class="block text-sm font-medium">Valor</label>
-                        <input type="number" id="budget-value" step="0.01" class="mt-1 block w-full rounded-xl" required>
+                <div class="form-grid three">
+                    <div class="col-span-2 form-field">
+                        <label for="budget-value" class="form-label">Valor</label>
+                        <input type="number" id="budget-value" step="0.01" class="input-control focus-ring" required>
                     </div>
-                    <div>
-                        <label for="budget-type" class="block text-sm font-medium">Tipo</label>
-                        <select id="budget-type" class="mt-1 block w-full rounded-xl">
+                    <div class="form-field">
+                        <label for="budget-type" class="form-label">Tipo</label>
+                        <select id="budget-type" class="input-control focus-ring">
                             <option value="fixed">Fixo (R$)</option>
                             <option value="percentage">Porcentagem (%)</option>
                         </select>
                     </div>
                 </div>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" id="cancel-budget" class="px-5 py-2.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-5 py-2.5 rounded-lg bg-slate-800 text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-800 dark:hover:bg-slate-300 shadow-sm transition-colors">Salvar</button>
+                <div class="form-actions">
+                    <button type="button" id="cancel-budget" class="btn-secondary focus-ring">Cancelar</button>
+                    <button type="submit" class="btn-primary focus-ring">Salvar</button>
                 </div>
             </form>
         </div>
     </div>
     
     <!-- Transaction Modal -->
-    <div id="transaction-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-md">
-            <h3 class="text-xl font-semibold mb-6 text-slate-800 dark:text-slate-200" id="transaction-modal-title">Adicionar Lançamento</h3>
-            <form id="transaction-form">
+    <div id="transaction-modal" class="modal modal-overlay fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
+        <div class="modal-panel" data-animate="modal">
+            <h3 class="modal-title" id="transaction-modal-title">Adicionar Lançamento</h3>
+            <form id="transaction-form" class="form-layout">
                 <input type="hidden" id="transaction-id">
-                <div class="mb-4">
-                    <label for="transaction-description" class="block text-sm font-medium">Descrição</label>
-                    <input type="text" id="transaction-description" class="mt-1 block w-full rounded-xl" required>
+                <div class="form-field">
+                    <label for="transaction-description" class="form-label">Descrição</label>
+                    <input type="text" id="transaction-description" class="input-control focus-ring" required>
                 </div>
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label for="transaction-amount" class="block text-sm font-medium">Valor</label>
-                        <input type="number" id="transaction-amount" step="0.01" class="mt-1 block w-full rounded-xl" required>
+                <div class="form-grid two">
+                    <div class="form-field">
+                        <label for="transaction-amount" class="form-label">Valor</label>
+                        <input type="number" id="transaction-amount" step="0.01" class="input-control focus-ring" required>
                     </div>
-                    <div>
-                        <label for="transaction-type" class="block text-sm font-medium">Tipo</label>
-                        <select id="transaction-type" class="mt-1 block w-full rounded-xl">
+                    <div class="form-field">
+                        <label for="transaction-type" class="form-label">Tipo</label>
+                        <select id="transaction-type" class="input-control focus-ring">
                             <option value="expense">Despesa</option>
                             <option value="income">Receita</option>
                         </select>
                     </div>
                 </div>
-                 <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label for="transaction-account" class="block text-sm font-medium">Conta</label>
-                        <select id="transaction-account" class="mt-1 block w-full rounded-xl" required></select>
+                <div class="form-grid two">
+                    <div class="form-field">
+                        <label for="transaction-account" class="form-label">Conta</label>
+                        <select id="transaction-account" class="input-control focus-ring" required></select>
                     </div>
-                    <div>
-                        <label for="transaction-category" class="block text-sm font-medium">Categoria</label>
-                        <select id="transaction-category" class="mt-1 block w-full rounded-xl" required></select>
+                    <div class="form-field">
+                        <label for="transaction-category" class="form-label">Categoria</label>
+                        <select id="transaction-category" class="input-control focus-ring" required></select>
                     </div>
                 </div>
-                <div class="mb-6">
-                    <label for="transaction-date" class="block text-sm font-medium">Data</label>
-                    <input type="date" id="transaction-date" class="mt-1 block w-full rounded-xl" required>
+                <div class="form-field">
+                    <label for="transaction-date" class="form-label">Data</label>
+                    <input type="date" id="transaction-date" class="input-control focus-ring" required>
                 </div>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" id="cancel-transaction" class="px-5 py-2.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-5 py-2.5 rounded-lg bg-slate-800 text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-800 dark:hover:bg-slate-300 shadow-sm transition-colors">Salvar</button>
+                <div class="form-actions">
+                    <button type="button" id="cancel-transaction" class="btn-secondary focus-ring">Cancelar</button>
+                    <button type="submit" class="btn-primary focus-ring">Salvar</button>
                 </div>
             </form>
         </div>
     </div>
     
     <!-- Transfer Modal -->
-    <div id="transfer-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
+    <div id="transfer-modal" class="modal modal-overlay fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-8 w-full max-w-lg">
             <h3 class="text-2xl font-bold mb-6 text-slate-900 dark:text-slate-100">Nova Transferência</h3>
-            <form id="transfer-form">
-                <div class="mb-6">
+            <form id="transfer-form" class="form-layout">
+                <div class="form-field">
                     <label for="transfer-description" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Descrição</label>
                     <input type="text" id="transfer-description" placeholder="Ex: Transferência para poupança" class="mt-1 block w-full rounded-xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3 shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all" required>
                 </div>
                 
-                <div class="mb-6">
+                <div class="form-field">
                     <label for="transfer-amount" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Valor</label>
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium">R$</span>
@@ -330,7 +331,7 @@
                     </div>
                 </div>
                 
-                <div class="mb-6">
+                <div class="form-field">
                     <label for="transfer-from-account" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                         <i data-lucide="arrow-up-circle" class="w-4 h-4 inline text-red-500"></i>
                         De (Conta de Origem)
@@ -344,7 +345,7 @@
                     </div>
                 </div>
                 
-                <div class="mb-6">
+                <div class="form-field">
                     <label for="transfer-to-account" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                         <i data-lucide="arrow-down-circle" class="w-4 h-4 inline text-green-500"></i>
                         Para (Conta de Destino)
@@ -352,30 +353,30 @@
                     <select id="transfer-to-account" class="mt-1 block w-full rounded-xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3 shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all" required></select>
                 </div>
                 
-                <div class="mb-6">
+                <div class="form-field">
                     <label for="transfer-date" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Data</label>
                     <input type="date" id="transfer-date" class="mt-1 block w-full rounded-xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3 shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all" required>
                 </div>
                 
                 <div class="flex justify-end space-x-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-                    <button type="button" id="cancel-transfer" class="px-6 py-3 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition-all font-medium">Cancelar</button>
-                    <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all font-medium">Transferir</button>
+                    <button type="button" id="cancel-transfer" class="btn-secondary focus-ring">Cancelar</button>
+                    <button type="submit" class="btn-primary focus-ring">Transferir</button>
                 </div>
             </form>
         </div>
     </div>
     
     <!-- Account Modal -->
-    <div id="account-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
+    <div id="account-modal" class="modal modal-overlay fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
          <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-8 w-full max-w-lg">
             <h3 class="text-2xl font-bold mb-6 text-slate-900 dark:text-slate-100" id="account-modal-title">Adicionar Conta</h3>
-            <form id="account-form">
+            <form id="account-form" class="form-layout">
                 <input type="hidden" id="account-id">
                 <input type="hidden" id="account-icon" value="wallet">
                 <input type="hidden" id="account-color" value="purple">
                 
                 <!-- Seletor de Ícone -->
-                <div class="mb-6">
+                <div class="form-field">
                     <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Escolha um Banco/Ícone</label>
                     <div class="grid grid-cols-5 gap-3">
                         <button type="button" class="icon-selector active" data-icon="wallet" data-color="purple">
@@ -441,11 +442,11 @@
                     </div>
                 </div>
 
-                <div class="mb-4">
+                <div class="form-field">
                     <label for="account-name" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Nome da Conta</label>
                     <input type="text" id="account-name" placeholder="Ex: Banco Inter, Nubank, Carteira..." class="mt-1 block w-full rounded-xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3 shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 dark:focus:border-purple-400 transition-all" required>
                 </div>
-                <div class="mb-6">
+                <div class="form-field">
                     <label for="account-balance" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Saldo Inicial</label>
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium">R$</span>
@@ -453,8 +454,8 @@
                     </div>
                 </div>
                 <div class="flex justify-end space-x-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-                    <button type="button" id="cancel-account" class="px-6 py-3 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition-all font-medium">Cancelar</button>
-                    <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all font-medium">Salvar Conta</button>
+                    <button type="button" id="cancel-account" class="btn-secondary focus-ring">Cancelar</button>
+                    <button type="submit" class="btn-primary focus-ring">Salvar Conta</button>
                 </div>
             </form>
         </div>
@@ -504,26 +505,26 @@
     </style>
 
     <!-- Payable Modal -->
-    <div id="payable-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
+    <div id="payable-modal" class="modal modal-overlay fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-md">
-            <h3 class="text-xl font-semibold mb-6 text-slate-800 dark:text-slate-200" id="payable-modal-title">Nova Conta a Pagar</h3>
-            <form id="payable-form">
+            <h3 class="modal-title" id="payable-modal-title">Nova Conta a Pagar</h3>
+            <form id="payable-form" class="form-layout">
                 <input type="hidden" id="payable-id">
-                <div class="mb-4">
+                <div class="form-field">
                     <label for="payable-description" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Descrição</label>
                     <input type="text" id="payable-description" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required>
                 </div>
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
+                <div class="form-grid two">
+                            <div class="form-field">
                         <label for="payable-amount" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Valor</label>
                         <input type="number" id="payable-amount" step="0.01" min="0" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required>
                     </div>
-                    <div>
+                            <div class="form-field">
                         <label for="payable-due-date" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Vencimento</label>
                         <input type="date" id="payable-due-date" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required>
                     </div>
                 </div>
-                <div class="mb-4">
+                <div class="form-field">
                     <label for="payable-category" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Categoria</label>
                     <select id="payable-category" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500" required></select>
                 </div>
@@ -537,34 +538,34 @@
                     <p id="payable-installments-info" class="text-xs text-slate-500 dark:text-slate-400 mt-1 hidden"></p>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Use apenas para contas fixas. Deixe em branco para repetir indefinidamente.</p>
                 </div>
-                <div class="mb-6">
+                <div class="form-field">
                     <label for="payable-notes" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Observações (opcional)</label>
                     <textarea id="payable-notes" rows="3" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm focus:border-slate-500 focus:ring-slate-500"></textarea>
                 </div>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" id="cancel-payable" class="px-5 py-2.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-5 py-2.5 rounded-lg bg-slate-800 text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-800 dark:hover:bg-slate-300 shadow-sm transition-colors">Salvar</button>
+                <div class="form-actions">
+                    <button type="button" id="cancel-payable" class="btn-secondary focus-ring">Cancelar</button>
+                    <button type="submit" class="btn-primary focus-ring">Salvar</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Payable Pay Modal -->
-    <div id="payable-pay-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
+    <div id="payable-pay-modal" class="modal modal-overlay fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
           <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-md">
-            <div class="mb-4">
+            <div class="form-field">
                 <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Pagar Conta</h3>
                 <p id="payable-pay-description" class="text-sm text-slate-500 dark:text-slate-300 mt-1"></p>
             </div>
-            <form id="payable-pay-form">
+            <form id="payable-pay-form" class="form-layout">
                 <input type="hidden" id="payable-pay-id">
-                <div class="mb-4">
+                <div class="form-field">
                     <label for="payable-pay-account" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Conta de pagamento</label>
-                    <select id="payable-pay-account" class="mt-1 block w-full rounded-xl" required></select>
+                    <select id="payable-pay-account" class="input-control focus-ring" required></select>
                 </div>
-                <div class="mb-4">
+                <div class="form-field">
                     <label for="payable-pay-date" class="block text-sm font-medium text-slate-600 dark:text-slate-300">Data do pagamento</label>
-                    <input type="date" id="payable-pay-date" class="mt-1 block w-full rounded-xl" required>
+                    <input type="date" id="payable-pay-date" class="input-control focus-ring" required>
                 </div>
                 <div class="mb-6 bg-slate-900/40 border border-white/10 rounded-2xl p-4">
                     <p class="text-sm text-slate-400">Valor</p>
@@ -572,38 +573,38 @@
                     <p id="payable-pay-due" class="text-xs text-slate-400 mt-1"></p>
                 </div>
                 <div class="modal-actions flex justify-end gap-3">
-                    <button type="button" id="cancel-payable-pay" class="px-5 py-2.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-5 py-2.5 rounded-lg bg-green-600 text-white hover:bg-green-700 shadow-sm transition-colors">Confirmar Pagamento</button>
+                    <button type="button" id="cancel-payable-pay" class="btn-secondary focus-ring">Cancelar</button>
+                    <button type="submit" class="btn-primary focus-ring">Confirmar Pagamento</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Category Modal -->
-    <div id="category-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
+    <div id="category-modal" class="modal modal-overlay fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
          <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-md">
-            <h3 class="text-xl font-semibold mb-6 text-slate-800 dark:text-slate-200" id="category-modal-title">Adicionar Categoria</h3>
-            <form id="category-form">
+            <h3 class="modal-title" id="category-modal-title">Adicionar Categoria</h3>
+            <form id="category-form" class="form-layout">
                 <input type="hidden" id="category-id">
                 <input type="hidden" id="category-parent-id-hidden">
-                <div class="mb-4">
-                    <label for="category-name" class="block text-sm font-medium">Nome da Categoria</label>
-                    <input type="text" id="category-name" class="mt-1 block w-full rounded-xl" required>
+                <div class="form-field">
+                    <label for="category-name" class="form-label">Nome da Categoria</label>
+                    <input type="text" id="category-name" class="input-control focus-ring" required>
                 </div>
-                <div class="mb-6" id="parent-category-display-wrapper">
-                    <label class="block text-sm font-medium">Categoria Pai</label>
+                <div class="form-field" id="parent-category-display-wrapper">
+                    <label class="form-label">Categoria Pai</label>
                     <p id="parent-category-display" class="mt-1 p-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"></p>
                 </div>
-                 <div class="flex justify-end space-x-3">
-                    <button type="button" id="cancel-category" class="px-5 py-2.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-5 py-2.5 rounded-lg bg-slate-800 text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-800 dark:hover:bg-slate-300 shadow-sm transition-colors">Salvar</button>
+                 <div class="form-actions">
+                    <button type="button" id="cancel-category" class="btn-secondary focus-ring">Cancelar</button>
+                    <button type="submit" class="btn-primary focus-ring">Salvar</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Category Expenses Modal -->
-    <div id="category-expenses-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
+    <div id="category-expenses-modal" class="modal modal-overlay fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-start gap-4 mb-4">
                 <div>
@@ -618,7 +619,7 @@
         </div>
     </div>
     <!-- Generic Alert Modal -->
-    <div id="alert-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4 z-50">
+    <div id="alert-modal" class="modal modal-overlay fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4 z-50">
         <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-md">
             <div id="alert-icon" class="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full"></div>
             <h3 id="alert-title" class="text-xl font-semibold text-center mb-2 text-slate-900 dark:text-slate-100"></h3>
@@ -630,16 +631,16 @@
     </div>
 
     <!-- Generic Confirm Modal -->
-    <div id="confirm-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4 z-50">
+    <div id="confirm-modal" class="modal modal-overlay fixed inset-0 bg-black bg-opacity-60 items-center justify-center p-4 z-50">
         <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 w-full max-w-md">
             <div id="confirm-icon" class="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full"></div>
             <h3 id="confirm-title" class="text-xl font-semibold text-center mb-2 text-slate-900 dark:text-slate-100"></h3>
             <p id="confirm-message" class="text-center text-slate-600 dark:text-slate-400 mb-6"></p>
             <div class="flex gap-3">
-                <button id="confirm-cancel-btn" class="flex-1 px-5 py-3 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition-colors font-medium">
+                <button id="confirm-cancel-btn" class="btn-secondary focus-ring flex-1">
                     Cancelar
                 </button>
-                <button id="confirm-ok-btn" class="flex-1 px-5 py-3 rounded-lg text-white transition-colors font-medium shadow-lg">
+                <button id="confirm-ok-btn" class="btn-primary focus-ring flex-1">
                     Confirmar
                 </button>
             </div>
@@ -648,6 +649,7 @@
 
     <!-- JavaScript Modules -->
     <script src="config.js"></script>
+    <script src="https://unpkg.com/@motionone/dom/dist/motion-one.umd.js"></script>
     <script src="js/state.js"></script>
     <script src="js/api.js"></script>
     <script src="js/gemini.js"></script>
@@ -674,6 +676,7 @@
     </script>
 </body>
 </html>
+
 
 
 

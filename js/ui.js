@@ -107,7 +107,48 @@ function parseDateValue(value) {
     return null;
 }
 
-/**
+const prefersReducedMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+
+function animateElements(selector, keyframes, options) {
+    if (prefersReducedMotion.matches || !window.Motion || typeof window.Motion.animate !== 'function') {
+        return;
+    }
+
+    const elements = document.querySelectorAll(selector);
+    elements.forEach((element, index) => {
+        window.Motion.animate(
+            element,
+            keyframes,
+            {
+                duration: 0.45,
+                delay: index * 0.06,
+                easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+                ...options
+            }
+        );
+    });
+}
+
+function runDashboardAnimations() {
+    animateElements(
+        '#dashboard-summary-cards .card-surface',
+        { opacity: [0, 1], transform: ['translateY(12px)', 'translateY(0)'] }
+    );
+
+    animateElements(
+        '#dashboard-progress-section [data-animate="fade"]',
+        { opacity: [0, 1], transform: ['translateY(20px)', 'translateY(0)'] },
+        { duration: 0.5 }
+    );
+
+    animateElements(
+        '#dashboard-progress-section [data-animate="slide-up"]',
+        { opacity: [0, 1], transform: ['translateY(16px)', 'translateY(0)'] },
+        { duration: 0.4 }
+    );
+}
+
+/** 
  * Render Dashboard view
  */
 function renderDashboard() {
@@ -120,6 +161,10 @@ function renderDashboard() {
     }
 
     const totalBalance = state.accounts.reduce((sum, acc) => sum + (parseFloat(acc.balance) || 0), 0);
+    const balancesHidden = !!state.hideBalances;
+    const totalBalanceDisplay = balancesHidden
+        ? '<span class="tracking-widest text-slate-400 dark:text-slate-600">••••</span>'
+        : formatCurrency(totalBalance);
 
     const fallbackDate = new Date();
     const selected = state.selectedMonth || { year: fallbackDate.getFullYear(), month: fallbackDate.getMonth() + 1 };
@@ -134,6 +179,55 @@ function renderDashboard() {
         const tDate = new Date(t.date);
         return tDate >= startOfMonth && tDate <= endOfMonth;
     });
+
+    const categoryById = state.categories.reduce((acc, category) => {
+        acc[category.id] = category;
+        return acc;
+    }, {});
+
+    const expensesBySubCategory = monthTransactions
+        .filter(t => t.type === 'expense')
+        .reduce((acc, transaction) => {
+            if (!transaction.categoryId) {
+                return acc;
+            }
+
+            const category = categoryById[transaction.categoryId];
+            if (!category || !category.parentId) {
+                return acc;
+            }
+
+            if (!acc[category.id]) {
+                const parent = categoryById[category.parentId];
+                acc[category.id] = {
+                    label: category.name,
+                    parentLabel: parent ? parent.name : 'Sem categoria principal',
+                    total: 0
+                };
+            }
+
+            acc[category.id].total += Number(transaction.amount) || 0;
+            return acc;
+        }, {});
+
+    const topSubCategories = Object.values(expensesBySubCategory)
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 3);
+
+    const subCategoryListHtml = topSubCategories.length
+        ? `<ul class="space-y-3">
+                ${topSubCategories.map((item, index) => `
+                    <li class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">${index + 1}. ${item.label}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Categoria principal: ${item.parentLabel}</p>
+                        </div>
+                        <span class="text-sm font-medium text-slate-600 dark:text-slate-300">${formatCurrency(item.total)}</span>
+                    </li>
+                `).join('')}
+            </ul>`
+        : `<p class="text-sm text-slate-500 dark:text-slate-400">Sem despesas em subcategorias neste mês.</p>`;
+
     const monthPendingPayables = state.payables.filter(p => {
         if (p.status !== 'pending') return false;
         const due = parseDateValue(p.dueDate);
@@ -162,31 +256,35 @@ function renderDashboard() {
         : 'Nenhuma conta pendente';
 
     summaryCardsContent.innerHTML = `
-        <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+        <div class="card-surface summary-card p-4">
             <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Contas a pagar (${monthName})</h3>
-            <p class="text-2xl font-bold text-slate-800 dark:text-slate-100">${formatCurrency(monthPendingAmount)}</p>
+            <p class="metric-value text-2xl font-bold">${formatCurrency(monthPendingAmount)}</p>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${payablesSubtitle}</p>
         </div>
-        <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+        <div class="card-surface summary-card p-4">
             <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Saldo Total</h3>
-            <p class="text-2xl font-bold text-slate-800 dark:text-slate-100">${formatCurrency(totalBalance)}</p>
+            <p class="metric-value text-2xl font-bold">${totalBalanceDisplay}</p>
         </div>
-        <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+        <div class="card-surface summary-card p-4">
             <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Receitas (${monthName})</h3>
-            <p class="text-2xl font-bold text-green-500">${formatCurrency(totalIncome)}</p>
+            <p class="metric-value text-2xl font-bold text-green-500">${formatCurrency(totalIncome)}</p>
         </div>
-        <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+        <div class="card-surface summary-card p-4">
             <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Despesas (${monthName})</h3>
-            <p class="text-2xl font-bold text-red-500">${formatCurrency(totalExpenses)}</p>
+            <p class="metric-value text-2xl font-bold text-red-500">${formatCurrency(totalExpenses)}</p>
         </div>
-        <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+        <div class="card-surface summary-card p-4">
             <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Balanço (${monthName})</h3>
-            <p class="text-2xl font-bold ${totalIncome - totalExpenses >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(totalIncome - totalExpenses)}</p>
+            <p class="metric-value text-2xl font-bold ${totalIncome - totalExpenses >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(totalIncome - totalExpenses)}</p>
         </div>
-        <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm flex flex-col">
+        <div class="card-surface summary-card p-4 flex flex-col">
             <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Taxa de Poupança</h3>
-            <p class="text-2xl font-bold ${savingsRate >= 0 ? 'text-green-500' : 'text-red-500'}">${savingsRate.toFixed(1)}%</p>
+            <p class="metric-value text-2xl font-bold ${savingsRate >= 0 ? 'text-green-500' : 'text-red-500'}">${savingsRate.toFixed(1)}%</p>
             <p class="text-xs text-slate-500 mt-1">${totalIncome > 0 ? `referente a ${monthName}` : 'sem receitas'}</p>
+        </div>
+        <div class="card-surface summary-card p-4">
+            <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-3">Subcategorias com mais despesas (${monthName})</h3>
+            ${subCategoryListHtml}
         </div>
     `;
     
@@ -213,18 +311,35 @@ function renderDashboard() {
     };
 
     progressSection.innerHTML = `
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300">Minhas Contas</h3>
-                <span class="text-sm text-slate-500 dark:text-slate-400">${state.accounts.length} ${state.accounts.length === 1 ? 'conta' : 'contas'}</span>
+        <div class="card-surface surface-elevated p-6" data-animate="fade">
+            <div class="flex justify-between items-start mb-4 gap-4">
+                <div>
+                    <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300">Minhas Contas</h3>
+                    <span class="text-sm text-slate-500 dark:text-slate-400">${state.accounts.length} ${state.accounts.length === 1 ? 'conta' : 'contas'}</span>
+                </div>
+                <button
+                    type="button"
+                    data-action="toggle-balances"
+                    class="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium border border-slate-200 dark:border-slate-600 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                    aria-pressed="${balancesHidden}"
+                >
+                    <i data-lucide="${balancesHidden ? 'eye-off' : 'eye'}" class="w-4 h-4"></i>
+                    ${balancesHidden ? 'Mostrar saldos' : 'Ocultar saldos'}
+                </button>
             </div>
             <div class="space-y-3">
                 ${state.accounts.map(account => {
                     const icon = account.icon || 'wallet';
                     const color = account.color || 'purple';
                     const balance = parseFloat(account.balance) || 0;
+                    const balanceDisplay = balancesHidden
+                        ? '<span class="tracking-widest text-slate-400 dark:text-slate-500">••••</span>'
+                        : formatCurrency(balance);
+                    const balanceClass = balancesHidden
+                        ? 'text-slate-400 dark:text-slate-500'
+                        : (balance >= 0 ? 'text-slate-800 dark:text-slate-100' : 'text-red-500');
                     return `
-                        <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                        <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors" data-animate="slide-up">
                             <div class="flex-shrink-0 w-12 h-12 ${colorClasses[color]} rounded-xl flex items-center justify-center shadow-sm">
                                 <i data-lucide="${icon}" class="w-6 h-6"></i>
                             </div>
@@ -233,14 +348,15 @@ function renderDashboard() {
                                 <p class="text-sm text-slate-500 dark:text-slate-400">Saldo disponível</p>
                             </div>
                             <div class="text-right">
-                                <p class="font-bold text-lg ${balance >= 0 ? 'text-slate-800 dark:text-slate-100' : 'text-red-500'}">${formatCurrency(balance)}</p>
+                                <p class="font-bold text-lg ${balanceClass}">${balanceDisplay}</p>
+                                ${balancesHidden ? '<p class="text-xs text-slate-400 dark:text-slate-500">Saldo oculto</p>' : ''}
                             </div>
                         </div>
                     `;
                 }).join('')}
             </div>
         </div>
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm">
+        <div class="card-surface surface-elevated p-6" data-animate="fade">
             <h3 class="text-lg font-semibold mb-4 text-slate-700 dark:text-slate-300">Progresso do Orçamento Mensal</h3>
             <div class="flex justify-between items-center text-sm text-slate-600 dark:text-slate-400 mb-1">
                 <span>Gasto: ${formatCurrency(totalExpenses)}</span>
@@ -259,6 +375,8 @@ function renderDashboard() {
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
+
+    runDashboardAnimations();
 
     renderCategoryPieChart(monthTransactions);
     renderIncomeExpenseChart(selectedDate);
@@ -453,21 +571,26 @@ function renderBudget() {
     const totalSpent = monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
 
     summaryDiv.innerHTML = `
-        <div class="grid grid-cols-3 gap-6 text-center">
-            <div>
-                <h4 class="text-slate-500 dark:text-slate-400">Receitas do Mês (Real)</h4>
-                <p class="text-2xl font-bold text-green-500">${formatCurrency(totalIncomeThisMonth)}</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="card-surface summary-card p-4 text-center" data-animate="summary">
+                <h4 class="text-sm text-slate-500 dark:text-slate-400">Receitas do mês (real)</h4>
+                <p class="metric-value text-2xl font-bold text-green-500">${formatCurrency(totalIncomeThisMonth)}</p>
             </div>
-            <div>
-                <h4 class="text-slate-500 dark:text-slate-400">Total Orçado (Despesas)</h4>
-                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200">${formatCurrency(totalPlanned)}</p>
+            <div class="card-surface summary-card p-4 text-center" data-animate="summary">
+                <h4 class="text-sm text-slate-500 dark:text-slate-400">Total orçado (despesas)</h4>
+                <p class="metric-value text-2xl font-bold">${formatCurrency(totalPlanned)}</p>
             </div>
-            <div>
-                <h4 class="text-slate-500 dark:text-slate-400">Total Gasto</h4>
-                <p class="text-2xl font-bold text-red-500">${formatCurrency(totalSpent)}</p>
+            <div class="card-surface summary-card p-4 text-center" data-animate="summary">
+                <h4 class="text-sm text-slate-500 dark:text-slate-400">Total gasto</h4>
+                <p class="metric-value text-2xl font-bold text-red-500">${formatCurrency(totalSpent)}</p>
             </div>
         </div>
     `;
+
+    animateElements(
+        '#budget-summary .card-surface',
+        { opacity: [0, 1], transform: ['translateY(12px)', 'translateY(0)'] }
+    );
     
     if (!state.budgetPlan.items.length) {
         listDiv.innerHTML = `<p class="text-center py-10 text-slate-500 dark:text-slate-400">Nenhum item no orçamento. Adicione um para começar a planejar.</p>`;
@@ -484,7 +607,7 @@ function renderBudget() {
         const progressBarColor = percentage > 90 ? 'bg-red-500' : percentage > 70 ? 'bg-yellow-500' : 'bg-slate-700';
 
         return `
-            <div class="p-4 border-b border-slate-200 dark:border-slate-700">
+            <div class="card-surface surface-elevated p-4 mb-4" data-animate="fade">
                 <div class="flex justify-between items-center mb-2">
                     <div class="flex items-center">
                         <span class="font-semibold text-slate-700 dark:text-slate-300">${category ? category.name : 'Sem Categoria'}</span>
@@ -505,6 +628,12 @@ function renderBudget() {
             </div>
         `;
     }).join('');
+
+    animateElements(
+        '#budget-list .card-surface',
+        { opacity: [0, 1], transform: ['translateY(16px)', 'translateY(0)'] },
+        { duration: 0.45 }
+    );
 }
 
 /**
@@ -526,19 +655,20 @@ function renderTransactions() {
     }
     
     list.innerHTML = `
-        <table class="w-full text-left">
-            <thead class="bg-slate-50 dark:bg-slate-900">
-                <tr class="border-b border-slate-200 dark:border-slate-700">
-                    <th class="p-3 text-sm font-semibold text-slate-600 dark:text-slate-400">Data</th>
-                    <th class="p-3 text-sm font-semibold text-slate-600 dark:text-slate-400">Descrição</th>
-                    <th class="p-3 text-sm font-semibold text-slate-600 dark:text-slate-400">Categoria/Origem</th>
-                    <th class="p-3 text-sm font-semibold text-slate-600 dark:text-slate-400">Conta/Destino</th>
-                    <th class="p-3 text-sm font-semibold text-slate-600 dark:text-slate-400 text-right">Valor</th>
-                    <th class="p-3 text-sm font-semibold text-slate-600 dark:text-slate-400 text-center">Ações</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                ${allItems.map(item => {
+        <div class="card-surface p-0 overflow-hidden" data-animate="fade">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 dark:bg-slate-900">
+                    <tr class="border-b border-slate-200 dark:border-slate-700">
+                        <th class="p-3 text-sm font-semibold text-slate-600 dark:text-slate-400">Data</th>
+                        <th class="p-3 text-sm font-semibold text-slate-600 dark:text-slate-400">Descrição</th>
+                        <th class="p-3 text-sm font-semibold text-slate-600 dark:text-slate-400">Categoria/Origem</th>
+                        <th class="p-3 text-sm font-semibold text-slate-600 dark:text-slate-400">Conta/Destino</th>
+                        <th class="p-3 text-sm font-semibold text-slate-600 dark:text-slate-400 text-right">Valor</th>
+                        <th class="p-3 text-sm font-semibold text-slate-600 dark:text-slate-400 text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                    ${allItems.map(item => {
                     // Check if it's a transfer
                     if (item.fromAccountId && item.toAccountId) {
                         const fromAccount = state.accounts.find(a => a.id === item.fromAccountId);
@@ -581,15 +711,22 @@ function renderTransactions() {
                             </tr>
                         `;
                     }
-                }).join('')}
-            </tbody>
-        </table>
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
     `;
     
     // Re-initialize Lucide icons
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
+
+    animateElements(
+        '#transactions-list [data-animate="fade"]',
+        { opacity: [0, 1], transform: ['translateY(16px)', 'translateY(0)'] },
+        { duration: 0.45 }
+    );
 }
 
 /**
@@ -602,7 +739,7 @@ function renderAccounts() {
         return;
     }
 
-    list.innerHTML = state.accounts.map(account => {
+    list.innerHTML = state.accounts.map((account, index) => {
         const icon = account.icon || 'wallet';
         const color = account.color || 'purple';
         const colorClasses = {
@@ -619,7 +756,7 @@ function renderAccounts() {
         };
         
         return `
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all border border-slate-100 dark:border-slate-700">
+        <div class="card-surface surface-elevated p-6 transition-all" data-animate="fade">
             <div class="flex items-start gap-4">
                 <div class="flex-shrink-0 w-14 h-14 ${colorClasses[color]} rounded-2xl flex items-center justify-center shadow-md">
                     <i data-lucide="${icon}" class="w-7 h-7"></i>
@@ -644,6 +781,12 @@ function renderAccounts() {
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
+
+    animateElements(
+        '#accounts-list [data-animate="fade"]',
+        { opacity: [0, 1], transform: ['translateY(18px)', 'translateY(0)'] },
+        { duration: 0.45 }
+    );
 }
 
 /**
@@ -679,12 +822,20 @@ function renderCategories() {
     };
 
     list.innerHTML = `
-        <div class="font-semibold p-3 border-b border-slate-300 dark:border-slate-600 flex justify-between bg-slate-50 dark:bg-slate-900 rounded-t-lg text-sm text-slate-600 dark:text-slate-400">
-            <span>Nome da Categoria</span>
-            <span>Ações</span>
+        <div class="card-surface surface-elevated overflow-hidden" data-animate="fade">
+            <div class="font-semibold p-3 border-b border-slate-200 dark:border-slate-700 flex justify-between bg-slate-50 dark:bg-slate-900 text-sm text-slate-600 dark:text-slate-400">
+                <span>Nome da Categoria</span>
+                <span>Ações</span>
+            </div>
+            ${categoriesHtml()}
         </div>
-        ${categoriesHtml()}
     `;
+
+    animateElements(
+        '#categories-list [data-animate="fade"]',
+        { opacity: [0, 1], transform: ['translateY(16px)', 'translateY(0)'] },
+        { duration: 0.45 }
+    );
 }
 
 /**
@@ -717,19 +868,19 @@ function renderPayables() {
     const totalPaidAmount = paidThisMonth.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
 
     summaryEl.innerHTML = `
-        <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+        <div class="card-surface summary-card p-4" data-animate="summary">
             <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Contas pendentes</h3>
-            <p class="text-2xl font-bold text-slate-800 dark:text-slate-100">${pending.length}</p>
+            <p class="metric-value text-2xl font-bold">${pending.length}</p>
             <p class="text-xs text-slate-500 dark:text-slate-400">${formatCurrency(totalPendingAmount)}</p>
         </div>
-        <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+        <div class="card-surface summary-card p-4" data-animate="summary">
             <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Atrasadas</h3>
-            <p class="text-2xl font-bold ${overdue.length ? 'text-red-500' : 'text-slate-800 dark:text-slate-100'}">${overdue.length}</p>
+            <p class="metric-value text-2xl font-bold ${overdue.length ? 'text-red-500' : ''}">${overdue.length}</p>
             <p class="text-xs text-slate-500 dark:text-slate-400">${formatCurrency(totalOverdueAmount)}</p>
         </div>
-        <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+        <div class="card-surface summary-card p-4" data-animate="summary">
             <h3 class="text-sm text-slate-500 dark:text-slate-400 mb-1">Pagas no mês</h3>
-            <p class="text-2xl font-bold text-green-500">${paidThisMonth.length}</p>
+            <p class="metric-value text-2xl font-bold text-green-500">${paidThisMonth.length}</p>
             <p class="text-xs text-slate-500 dark:text-slate-400">${formatCurrency(totalPaidAmount)}</p>
         </div>
     `;
@@ -805,29 +956,42 @@ function renderPayables() {
     }).join('');
 
     listEl.innerHTML = `
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                <thead class="bg-slate-50 dark:bg-slate-900">
-                    <tr>
-                        <th class="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Vencimento</th>
-                        <th class="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Descrição</th>
-                        <th class="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Categoria</th>
-                        <th class="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Tipo</th>
-                        <th class="p-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Valor</th>
-                        <th class="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Status</th>
-                        <th class="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Ações</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                    ${rows}
-                </tbody>
-            </table>
+        <div class="card-surface p-0 overflow-hidden" data-animate="fade">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                    <thead class="bg-slate-50 dark:bg-slate-900">
+                        <tr>
+                            <th class="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Vencimento</th>
+                            <th class="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Descrição</th>
+                            <th class="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Categoria</th>
+                            <th class="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Tipo</th>
+                            <th class="p-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Valor</th>
+                            <th class="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Status</th>
+                            <th class="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                        ${rows}
+                    </tbody>
+                </table>
+            </div>
         </div>
     `;
 
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
+
+    animateElements(
+        '#payables-summary .card-surface',
+        { opacity: [0, 1], transform: ['translateY(12px)', 'translateY(0)'] }
+    );
+
+    animateElements(
+        '#payables-list [data-animate="fade"]',
+        { opacity: [0, 1], transform: ['translateY(16px)', 'translateY(0)'] },
+        { duration: 0.5 }
+    );
 }
 
 /**
